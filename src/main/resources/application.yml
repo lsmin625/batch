@@ -1,0 +1,27 @@
+
+jasypt:
+  encryptor:
+    bean: jasyptEncryptor
+    secret: mykey
+
+meta:
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    url: jdbc:sqlite:C:/sqlite/db/batch-meta.db
+    username: ENC(HN3Y5j1JRF4y3DRXoPIJrA==)
+    password: ENC(ajOdzzD7FDVoZ6SZegisXw==)
+
+jobs:
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    url: jdbc:sqlite:C:/sqlite/db/batch-jobs.db
+    username: ENC(HN3Y5j1JRF4y3DRXoPIJrA==)
+    password: ENC(ajOdzzD7FDVoZ6SZegisXw==)
+    populator: C:/sqlite/data/user-schema.sql
+  file:
+    input-csv: C:/sqlite/data/users-input.csv
+    output-xml: C:/sqlite/data/users-output.xml
+    output-json: C:/sqlite/data/users-output.json
+    
+quartz:
+  cron: "/20 * * * * ?"
