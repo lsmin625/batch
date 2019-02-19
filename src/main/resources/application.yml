@@ -4,6 +4,11 @@ jasypt:
     bean: jasyptEncryptor
     secret: mykey
 
+spring:
+  batch:
+    job:
+      enabled: false
+
 meta:
   datasource:
     driver-class-name: org.sqlite.JDBC

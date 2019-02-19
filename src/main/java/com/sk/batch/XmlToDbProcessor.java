@@ -1,8 +1,8 @@
-package com.sk.batch.jobs.sample.step;
+package com.sk.batch;
 
 import org.springframework.batch.item.ItemProcessor;
 
-import com.sk.batch.jobs.sample.data.UserXml;
+import com.sk.batch.UserXml;
 
 public class XmlToDbProcessor<T1, T2> implements ItemProcessor<UserXml, UserXml> {
 

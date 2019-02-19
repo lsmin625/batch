@@ -1,4 +1,4 @@
-package com.sk.batch.jobs.sample.common;
+package com.sk.batch;
 
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;

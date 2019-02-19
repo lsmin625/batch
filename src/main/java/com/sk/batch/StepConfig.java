@@ -1,9 +1,18 @@
-package com.sk.batch.jobs.sample.step;
+package com.sk.batch;
+
+import java.net.MalformedURLException;
 
 import javax.sql.DataSource;
 
+import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.builder.FlowJobBuilder;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.job.builder.JobFlowBuilder;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.step.builder.SimpleStepBuilder;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
@@ -23,17 +32,29 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.jdbc.datasource.init.DataSourceInitializer;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 
-import com.sk.batch.jobs.sample.data.User;
-import com.sk.batch.jobs.sample.data.UserJson;
-import com.sk.batch.jobs.sample.data.UserXml;
+import com.sk.batch.User;
+import com.sk.batch.UserJson;
+import com.sk.batch.UserXml;
+import com.sk.batch.JobFinishedListener;
 
 @Configuration
+@EnableBatchProcessing
 public class StepConfig {
-	
+
+	@Autowired
+	private Environment env;
+
+	@Value("file:${jobs.datasource.populator}")
+	private Resource usersSchema;
+
     @Value("file:${jobs.file.input-csv}")
     private Resource inputCsv;
  
@@ -45,7 +66,41 @@ public class StepConfig {
 
 	@Autowired
 	StepBuilderFactory stepBuilderFactory;
-  
+
+	@Autowired @Qualifier("metaJobBuilderFactory")
+    private JobBuilderFactory jobBuilderFactory;
+
+    @Bean @Qualifier("jobDataSource")
+    public DataSource jobDataSource() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName(env.getProperty("jobs.datasource.driver-class-name"));
+        dataSource.setUrl(env.getProperty("jobs.datasource.url"));
+        dataSource.setUsername(env.getProperty("jobs.datasource.username"));
+        dataSource.setPassword(env.getProperty("jobs.datasource.password"));
+        return dataSource;
+    }
+
+  ///*
+    @Bean @Qualifier("jobDataSourceInitializer")
+    public DataSourceInitializer jobDataSourceInitializer(@Qualifier("jobDataSource") DataSource dataSource) throws MalformedURLException {
+        ResourceDatabasePopulator databasePopulator = new ResourceDatabasePopulator();
+        databasePopulator.addScript(usersSchema);
+        databasePopulator.setIgnoreFailedDrops(true);
+ 
+        DataSourceInitializer initializer = new DataSourceInitializer();
+        initializer.setDataSource(dataSource);
+        initializer.setDatabasePopulator(databasePopulator);
+ 
+        return initializer;
+    }
+//*/
+
+    @Bean @Qualifier("jobJdbcTemplate")
+    public NamedParameterJdbcTemplate jobJdbcTemplate(@Qualifier("jobDataSource") DataSource dataSource) {
+       	NamedParameterJdbcTemplate jobJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+    	return jobJdbcTemplate;
+    }
+
     @Bean @Qualifier("step1Reader")
     public ItemReader<User> step1Reader() {
         DelimitedLineTokenizer tokenizer = new DelimitedLineTokenizer();  //default delimiter is comma(','); if any other, use .setDelimiter('')
@@ -165,4 +220,19 @@ public class StepConfig {
         return simpleStepBuilder.build();
     }
 
+ 	@Bean @Qualifier("sampleBatchJob")
+    public Job sampleBatchJob(JobFinishedListener listener, @Qualifier("step1") Step step1, @Qualifier("step2") Step step2, @Qualifier("step3") Step step3) {
+        JobBuilder jobBuilder = jobBuilderFactory.get("sampleBatchJob");
+        jobBuilder.incrementer(new RunIdIncrementer());
+        jobBuilder.preventRestart();
+        jobBuilder.listener(listener);
+
+        JobFlowBuilder jobFlowBuilder = jobBuilder.flow(step1);
+        jobFlowBuilder.next(step2);
+        jobFlowBuilder.next(step3);
+        jobFlowBuilder.end();
+        
+        FlowJobBuilder flowJobBuilder = jobFlowBuilder.build();
+        return flowJobBuilder.build();
+    }
 }
