@@ -1,5 +1,7 @@
 package com.sk.batch;
 
+import javax.sql.DataSource;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
@@ -8,24 +10,26 @@ import org.springframework.batch.core.repository.support.JobRepositoryFactoryBea
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import java.net.MalformedURLException;
-
-import javax.sql.DataSource;
 
 @Configuration
 public class MetaConfig {
 
 	@Autowired
 	private Environment env;
+
+	@Bean
+	public StandardPBEStringEncryptor jasyptEncryptor() {
+        StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();  
+        encryptor.setPassword(env.getProperty("jasypt.encryptor.secret"));  
+        encryptor.setAlgorithm("PBEWITHMD5ANDDES");  
+        return encryptor;
+    }
 
     @Bean @Primary @Qualifier("metaDataSource")
     public DataSource metaDataSource() {
@@ -35,13 +39,6 @@ public class MetaConfig {
         dataSource.setUsername(env.getProperty("meta.datasource.username"));
         dataSource.setPassword(env.getProperty("meta.datasource.password"));
         return dataSource;
-    }
-
-    @Bean @Qualifier("metaDataSourceInitializer")
-    public DataSourceInitializer metaDataSourceInitializer(@Qualifier("metaDataSource") DataSource dataSource) throws MalformedURLException {
-        DataSourceInitializer initializer = new DataSourceInitializer();
-        initializer.setDataSource(dataSource);
-        return initializer;
     }
 
     @Bean @Qualifier("metaTransactionManager")

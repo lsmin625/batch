@@ -10,19 +10,31 @@ import org.springframework.stereotype.Component;
 @Component
 public class JobFinishedListener extends JobExecutionListenerSupport {
 	private Logger logger = LoggerFactory.getLogger(JobFinishedListener.class);
+	private JobCaller caller = null;
 
+	public synchronized void setCaller(JobCaller caller) {
+		logger.info("#### SET CALLER : " + caller.getCallerName());
+		this.caller = caller;
+	}
+	
 	@Override
 	public void beforeJob(JobExecution jobExecution) {
-		logger.info("JOB STARTING! : " + jobExecution.getStatus());
+		if(caller != null) {
+			caller.jobStarted(jobExecution.getStatus());
+		}
+		logger.info("#### JOB STARTING! : " + jobExecution.getStatus());
 	}
 
 	@Override
 	public void afterJob(JobExecution jobExecution) {
+		if(caller != null) {
+			caller.jobFinished(jobExecution.getStatus());
+		}
 		if(jobExecution.getStatus() == BatchStatus.COMPLETED) {
-			logger.info("JOB COMPLETED! : " + jobExecution.getStatus());
+			logger.info("#### JOB COMPLETED in SUCCESS! : " + jobExecution.getStatus());
 		}
 		else {
-			logger.info("JOB NOT COMPLETED!!! : " + jobExecution.getStatus());
+			logger.info("#### JOB COMPLETED in FAIL!!!! : " + jobExecution.getStatus());
 		}
 	}
 

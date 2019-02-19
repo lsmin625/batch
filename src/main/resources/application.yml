@@ -1,13 +1,12 @@
+spring:
+  batch:
+    job:
+      enabled: false
 
 jasypt:
   encryptor:
     bean: jasyptEncryptor
     secret: mykey
-
-spring:
-  batch:
-    job:
-      enabled: false
 
 meta:
   datasource:
@@ -27,6 +26,3 @@ jobs:
     input-csv: C:/sqlite/data/users-input.csv
     output-xml: C:/sqlite/data/users-output.xml
     output-json: C:/sqlite/data/users-output.json
-    
-quartz:
-  cron: "/20 * * * * ?"

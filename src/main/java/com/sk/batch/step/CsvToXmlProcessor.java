@@ -1,11 +1,8 @@
-package com.sk.batch;
+package com.sk.batch.step;
 
 import java.util.Date;
 
 import org.springframework.batch.item.ItemProcessor;
-
-import com.sk.batch.User;
-import com.sk.batch.UserXml;
 
 public class CsvToXmlProcessor implements ItemProcessor<User, UserXml> {
 

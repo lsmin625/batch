@@ -1,11 +1,11 @@
-package com.sk.batch;
+package com.sk.batch.step;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.springframework.jdbc.core.RowMapper;
 
-import com.sk.batch.UserXml;
+import com.sk.batch.step.UserXml;
 
 public class UserRowMapper implements RowMapper<UserXml> {
 

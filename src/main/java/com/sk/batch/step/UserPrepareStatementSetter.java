@@ -1,4 +1,4 @@
-package com.sk.batch;
+package com.sk.batch.step;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 import org.springframework.batch.item.database.ItemPreparedStatementSetter;
 
-import com.sk.batch.UserXml;
+import com.sk.batch.step.UserXml;
 
 public class UserPrepareStatementSetter implements ItemPreparedStatementSetter<UserXml> {
 

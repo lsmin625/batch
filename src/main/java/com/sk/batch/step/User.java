@@ -1,4 +1,4 @@
-package com.sk.batch;
+package com.sk.batch.step;
 
 import java.util.Date;
 import lombok.Setter;

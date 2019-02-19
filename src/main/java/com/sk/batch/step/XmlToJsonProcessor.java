@@ -1,9 +1,9 @@
-package com.sk.batch;
+package com.sk.batch.step;
 
 import org.springframework.batch.item.ItemProcessor;
 
-import com.sk.batch.UserJson;
-import com.sk.batch.UserXml;
+import com.sk.batch.step.UserJson;
+import com.sk.batch.step.UserXml;
 
 public class XmlToJsonProcessor implements ItemProcessor<UserXml, UserJson> {
 
