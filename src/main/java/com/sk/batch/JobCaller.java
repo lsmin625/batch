@@ -1,9 +1,9 @@
 package com.sk.batch;
 
-import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.JobExecution;
 
 public interface JobCaller {
 	String getCallerName();
-	void jobStarted(BatchStatus status);
-	void jobFinished(BatchStatus status);
+	void jobStarted(JobExecution exec);
+	void jobFinished(JobExecution exec);
 }

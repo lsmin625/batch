@@ -1,10 +1,8 @@
 package com.sk.batch;
 
-import java.net.MalformedURLException;
 import javax.sql.DataSource;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.job.builder.FlowJobBuilder;
@@ -35,8 +33,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.jdbc.datasource.init.DataSourceInitializer;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 
 import com.sk.batch.step.CsvToXmlProcessor;
@@ -49,24 +45,20 @@ import com.sk.batch.step.UserXml;
 import com.sk.batch.step.XmlToDbProcessor;
 import com.sk.batch.step.XmlToJsonProcessor;
 
-@EnableBatchProcessing
 @Configuration @Import(MetaConfig.class)
 public class JobConfig {
 
 	@Autowired
 	private Environment env;
 
-	@Value("file:${jobs.datasource.populator}")
-	private Resource usersSchema;
-
-    @Value("file:${jobs.file.input-csv}")
-    private Resource inputCsv;
+    @Value("file:${jobs.file.step1-input}")
+    private Resource inputStep1;
  
-    @Value("file:${jobs.file.output-xml}")
-    private Resource outputXml;
+    @Value("file:${jobs.file.step1-output}")
+    private Resource outputStep1;
 
-    @Value("file:${jobs.file.output-json}")
-    private Resource outputJson;
+    @Value("file:${jobs.file.step3-output}")
+    private Resource outputStep3;
 
 	@Autowired
 	StepBuilderFactory stepBuilderFactory;
@@ -87,21 +79,6 @@ public class JobConfig {
         return dataSource;
     }
 
-///*
-    @Bean @Qualifier("jobDataSourceInitializer")
-    public DataSourceInitializer jobDataSourceInitializer(@Qualifier("jobDataSource") DataSource dataSource) throws MalformedURLException {
-        ResourceDatabasePopulator databasePopulator = new ResourceDatabasePopulator();
-        databasePopulator.addScript(usersSchema);
-        databasePopulator.setIgnoreFailedDrops(true);
- 
-        DataSourceInitializer initializer = new DataSourceInitializer();
-        initializer.setDataSource(dataSource);
-        initializer.setDatabasePopulator(databasePopulator);
- 
-        return initializer;
-    }
-//*/
-
     @Bean @Qualifier("jobJdbcTemplate")
     public NamedParameterJdbcTemplate jobJdbcTemplate(@Qualifier("jobDataSource") DataSource dataSource) {
        	NamedParameterJdbcTemplate jobJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
@@ -119,7 +96,7 @@ public class JobConfig {
 
         FlatFileItemReader<User> reader = new FlatFileItemReader<User>();
         reader.setLineMapper(lineMapper);
-        reader.setResource(inputCsv);
+        reader.setResource(inputStep1);
         reader.setLinesToSkip(1);
         return reader;
     }
@@ -137,7 +114,7 @@ public class JobConfig {
         StaxEventItemWriter<UserXml> writer = new StaxEventItemWriter<UserXml>();
         writer.setMarshaller(marshaller);
         writer.setRootTagName("userlist");
-        writer.setResource(outputXml);
+        writer.setResource(outputStep1);
         return writer;
     }
  
@@ -160,7 +137,7 @@ public class JobConfig {
         marshaller.setClassesToBeBound(new Class[] { UserXml.class });
 
         StaxEventItemReader<UserXml> reader = new StaxEventItemReader<UserXml>();
-    	reader.setResource(outputXml);
+    	reader.setResource(outputStep1);
     	reader.setFragmentRootElementName("user");
     	reader.setUnmarshaller(marshaller);
         return reader;
@@ -175,9 +152,13 @@ public class JobConfig {
     public ItemWriter<UserXml> step2Writer(@Qualifier("jobDataSource") DataSource dataSource, 
     		@Qualifier("jobJdbcTemplate") NamedParameterJdbcTemplate jobJdbcTemplate) {
        	JdbcBatchItemWriter<UserXml> writer = new JdbcBatchItemWriter<UserXml>();
+       	StringBuffer sql = new StringBuffer();
+       	sql.append("INSERT INTO user (user_id, user_name, transaction_date, transaction_amount, updated_date)");
+       	sql.append(" VALUES (?, ?, ?, ?, ?)");
+       	sql.append(" ON CONFLICT(user_id) DO UPDATE SET user_id=?;");
     	writer.setDataSource(dataSource);
  		writer.setJdbcTemplate(jobJdbcTemplate);
-    	writer.setSql("INSERT INTO user (user_id, user_name, transaction_date, transaction_amount, updated_date) VALUES (?, ?, ?, ?, ?)");
+    	writer.setSql(sql.toString());
     	writer.setItemPreparedStatementSetter(new UserPrepareStatementSetter());
     	return writer;
     }
@@ -212,7 +193,7 @@ public class JobConfig {
  
     @Bean @Qualifier("step3Writer")
     public ItemWriter<UserJson> step3Writer() {
-        JsonFileItemWriter<UserJson> writer = new JsonFileItemWriter<UserJson>(outputJson, new JacksonJsonObjectMarshaller<UserJson>());
+        JsonFileItemWriter<UserJson> writer = new JsonFileItemWriter<UserJson>(outputStep3, new JacksonJsonObjectMarshaller<UserJson>());
        	return writer;
     }
 

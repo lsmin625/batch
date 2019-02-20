@@ -3,6 +3,9 @@ spring:
     job:
       enabled: false
 
+server:
+  port: 8081
+  
 jasypt:
   encryptor:
     bean: jasyptEncryptor
@@ -11,18 +14,18 @@ jasypt:
 meta:
   datasource:
     driver-class-name: org.sqlite.JDBC
-    url: jdbc:sqlite:C:/sqlite/db/batch-meta.db
+    url: jdbc:sqlite:C:/_github/batch-sample/data/batch-meta.db
     username: ENC(HN3Y5j1JRF4y3DRXoPIJrA==)
     password: ENC(ajOdzzD7FDVoZ6SZegisXw==)
 
 jobs:
   datasource:
     driver-class-name: org.sqlite.JDBC
-    url: jdbc:sqlite:C:/sqlite/db/batch-jobs.db
+    url: jdbc:sqlite:C:/_github/batch-sample/data/batch-jobs.db
     username: ENC(HN3Y5j1JRF4y3DRXoPIJrA==)
     password: ENC(ajOdzzD7FDVoZ6SZegisXw==)
-    populator: C:/sqlite/data/user-schema.sql
+    populator: C:/_github/batch-sample/data/step2-schema.sql
   file:
-    input-csv: C:/sqlite/data/users-input.csv
-    output-xml: C:/sqlite/data/users-output.xml
-    output-json: C:/sqlite/data/users-output.json
+    step1-input: C:/_github/batch-sample/data/step1-input-mass.csv
+    step1-output: C:/_github/batch-sample/data/step1-output.xml
+    step3-output: C:/_github/batch-sample/data/step3-output.json

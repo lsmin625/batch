@@ -27,72 +27,62 @@ public class JobController implements JobCaller{
 	@Autowired
 	private JobExecutor executor;
 
-    @RequestMapping("/restart")
-    public Map<String, Object> doRestart(@RequestParam Map<String, String> param) {
-    	logger.info("#### REQUESTED REST API [/restart]");
-    	Map<String, Object> res = new HashMap<String, Object>();
-
-    	BatchStatus status = executor.execute(sampleJob, this);
-    	if(status != null) {
-    		res.put("execution", status.toString());
-    	}
-    	else {
-    		res.put("execution", "failed");
-    	}
-
-		return res;
+    @RequestMapping("/start")
+    public Map<String, Object> doStart(@RequestParam Map<String, String> param) {
+    	logger.info("#### REQUESTED REST API [/start]");
+    	JobExecution exec = executor.execute(sampleJob, this);
+		return getStatus(exec);
     }
 
     @RequestMapping("/status")
     public Map<String, Object> doStatus(@RequestParam Map<String, String> param) {
     	logger.info("#### REQUESTED REST API [/status]");
-    	Map<String, Object> res = new HashMap<String, Object>();
-    	SimpleDateFormat form = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
- 
-    	JobExecution status = executor.getStatus();
-    	if(status != null) {
-    		res.put("creat-time", form.format(status.getCreateTime()));
-    		res.put("start-time", form.format(status.getStartTime()));
-    		res.put("end-time", form.format(status.getEndTime()));
-    		res.put("status", status.getStatus().toString());
-    		res.put("parameters", status.getJobParameters());
-    	}
-    	else {
-    		res.put("status", "unknown");
-    	}
-
-    	return res;
+    	JobExecution exec = executor.getStatus();
+		return getStatus(exec);
     }
 
     @RequestMapping("/stop")
     public Map<String, Object> doStop(@RequestParam Map<String, String> param) {
     	logger.info("#### REQUESTED REST API [/stop]");
-    	Map<String, Object> res = new HashMap<String, Object>();
- 
-    	executor.forceToStop();
-   		res.put("stop", "forced");
-
-    	return res;
+     	JobExecution exec = executor.forceToStop();
+		return getStatus(exec);
     }
 
+    private Map<String, Object> getStatus(JobExecution exec) {
+    	Map<String, Object> obj = new HashMap<String, Object>();
+    	SimpleDateFormat form = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    	if(exec != null) {
+    		if(exec.getCreateTime() != null) {
+    			obj.put("create-time", form.format(exec.getCreateTime()));
+    		}
+    		if(exec.getStartTime() != null) {
+    			obj.put("start-time", form.format(exec.getStartTime()));
+    		}
+    		if(exec.getEndTime() != null) {
+    			obj.put("end-time", form.format(exec.getEndTime()));
+    		}
+    		obj.put("status", exec.getStatus().toString());
+    		obj.put("parameters", exec.getJobParameters().getParameters());
+    	}
+    	else {
+    		obj.put("status", "unknown");
+    	}
+
+    	return obj;
+    }
 
 	@Override
-	public void jobStarted(BatchStatus status) {
-		if(status == BatchStatus.STARTED) {
-			logger.info("#### CONTROLLER JOB STARTED");
-		}
-		else {
-			logger.info("#### CONTROLLER JOB unknown status" + status);
-		}
+	public void jobStarted(JobExecution exec) {
+		logger.info("#### CONTROLLER JOB STARTED\n" + getStatus(exec));
 	}
 
 	@Override
-	public void jobFinished(BatchStatus status) {
-		if(status == BatchStatus.COMPLETED) {
-			logger.info("#### CONTROLLER JOB COMPLETED in SUCCESS!");
+	public void jobFinished(JobExecution exec) {
+		if(exec.getStatus() == BatchStatus.COMPLETED) {
+			logger.info("#### CONTROLLER JOB COMPLETED in SUCCESS!\n" + getStatus(exec));
 		}
 		else {
-			logger.info("#### CONTROLLER JOB COMPLETED in FAIL!!!!" + status);
+			logger.info("#### CONTROLLER JOB COMPLETED in FAIL!!!!\n" + getStatus(exec));
 		}
 	}
 

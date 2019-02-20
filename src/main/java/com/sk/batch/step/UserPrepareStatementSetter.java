@@ -17,5 +17,6 @@ public class UserPrepareStatementSetter implements ItemPreparedStatementSetter<U
         ps.setDate(3, new Date(item.getTransactionDate().getTime()));
         ps.setDouble(4, item.getTransactionAmount());
         ps.setDate(5, new Date(item.getUpdatedDate().getTime()));
+        ps.setInt(6, item.getUserId());
 	}
 }

@@ -5,7 +5,6 @@ import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -27,17 +26,22 @@ public class JobExecutor {
 	
 	private JobExecution jobExecution;
 
-    public synchronized BatchStatus execute(Job job, JobCaller caller) {
+    public synchronized JobExecution execute(Job job, JobCaller caller) {
+    	if(jobExecution != null && (jobExecution.isRunning() || jobExecution.isStopping())) {
+			logger.info("#### JOB IS RUNNING...IGNORED REQUEST FROM: " + caller.getCallerName());
+    		return jobExecution;
+    	}
  		try {
 			listener.setCaller(caller);
 			JobParametersBuilder para = new JobParametersBuilder();
 			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:00");
-			para.addString("TIME", formatter.format(new Date()));
-			para.addString("LAUNCHER", caller.getCallerName());
+			para.addString("JOB", job.getName());
+			para.addString("LAUNCH-TIME", formatter.format(new Date()));
+			para.addString("CALLER", caller.getCallerName());
 			jobExecution = jobLauncher.run(job, para.toJobParameters());
-			return jobExecution.getStatus();
+			return jobExecution;
 		} catch (JobRestartException e) {
-			logger.info("#### JOB INSTANCE ALREADY EXISTS!!!");
+			logger.info("#### JOB INSTANCE DUPLICATED!!!");
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -53,10 +57,11 @@ public class JobExecutor {
     		return null;
     	}
     }
-    
-    public void forceToStop() {
+   
+    public JobExecution forceToStop() {
     	if(jobExecution != null && jobExecution.isRunning()) {
     		jobExecution.stop();
     	}
+    	return jobExecution;
     }
 }
