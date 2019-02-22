@@ -18,5 +18,4 @@ public class XmlToJsonProcessor implements ItemProcessor<UserXml, UserJson> {
 		userJson.setUserGroup("Guest");
         return userJson;
 	}
-
 }

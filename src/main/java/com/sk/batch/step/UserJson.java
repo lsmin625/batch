@@ -5,9 +5,9 @@ import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter @Getter 
 //@JsonTypeName("user") 
 //@JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
+@Setter @Getter 
 public class UserJson {
     private String userName;
     private int userId;
@@ -22,5 +22,4 @@ public class UserJson {
           + ", transactionDate=" + transactionDate + ", transactionAmount=" + transactionAmount
           + ", updatedDate=" + updatedDate + ", userGroup=" + userGroup + "]";
     }
-
 }

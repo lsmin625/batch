@@ -47,7 +47,9 @@ import com.sk.batch.step.XmlToJsonProcessor;
 
 @Configuration @Import(MetaConfig.class)
 public class JobConfig {
-
+	public static final String SCHEDULE = "0 0/10 * * * ?";
+	public static final String DATEFORMAT = "yyyy-MM-dd HH:mm:00";
+	
 	@Autowired
 	private Environment env;
 
@@ -197,7 +199,7 @@ public class JobConfig {
        	return writer;
     }
 
-    @Bean @Qualifier("setp3")
+    @Bean @Qualifier("step3")
     protected Step step3(@Qualifier("step3Reader") ItemReader<UserXml> reader, 
     		@Qualifier("step3Processor") ItemProcessor<UserXml, UserJson> processor, 
     		@Qualifier("step3Writer") ItemWriter<UserJson> writer) {
@@ -213,7 +215,8 @@ public class JobConfig {
  	@Bean @Qualifier("sampleBatchJob")
     public Job sampleBatchJob(@Qualifier("step1") Step step1, 
     		@Qualifier("step2") Step step2, @Qualifier("step3") Step step3) {
-        JobBuilder jobBuilder = jobBuilderFactory.get("sampleBatchJob");
+
+ 		JobBuilder jobBuilder = jobBuilderFactory.get("sampleBatchJob");
         jobBuilder.incrementer(new RunIdIncrementer());
         jobBuilder.preventRestart();
         jobBuilder.listener(jobListener);

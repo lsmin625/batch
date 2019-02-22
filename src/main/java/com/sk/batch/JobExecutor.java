@@ -34,7 +34,7 @@ public class JobExecutor {
  		try {
 			listener.setCaller(caller);
 			JobParametersBuilder para = new JobParametersBuilder();
-			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:00");
+			SimpleDateFormat formatter = new SimpleDateFormat(JobConfig.DATEFORMAT);
 			para.addString("JOB", job.getName());
 			para.addString("LAUNCH-TIME", formatter.format(new Date()));
 			para.addString("CALLER", caller.getCallerName());

@@ -10,7 +10,6 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class JobController implements JobCaller{
 	private Logger logger = LoggerFactory.getLogger(JobController.class);
 	
-	@Autowired @Qualifier("sampleBatchJob")
+	@Autowired
 	private Job sampleJob;
  
 	@Autowired
