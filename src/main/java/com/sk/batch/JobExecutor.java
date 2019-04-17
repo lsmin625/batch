@@ -12,8 +12,10 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+@Import(JobConfig.class)
 @Component
 public class JobExecutor {
 	private Logger logger = LoggerFactory.getLogger(JobExecutor.class);

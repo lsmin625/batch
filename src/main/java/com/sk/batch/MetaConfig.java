@@ -1,5 +1,8 @@
 package com.sk.batch;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import javax.sql.DataSource;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
@@ -10,19 +13,31 @@ import org.springframework.batch.core.repository.support.JobRepositoryFactoryBea
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
-public class MetaConfig {
+public class MetaConfig implements EnvironmentAware{
 
 	@Autowired
 	private Environment env;
+
+    @Override
+    public void setEnvironment(final Environment env) {
+        this.env = env;
+    }
+
+    @Bean(destroyMethod = "shutdown")
+    public Executor taskExecutor() {
+        return Executors.newScheduledThreadPool(100);
+    }
 
 	@Bean
 	public StandardPBEStringEncryptor jasyptEncryptor() {

@@ -1,6 +1,8 @@
 package com.sk.batch;
 
 import java.text.SimpleDateFormat;
+import java.util.Base64;
+import java.util.Base64.Decoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@Import(JobConfig.class)
+@Import(JobScheduler.class)
 public class JobController implements JobCaller{
 	private Logger logger = LoggerFactory.getLogger(JobController.class);
 	
@@ -25,6 +27,21 @@ public class JobController implements JobCaller{
  
 	@Autowired
 	private JobExecutor executor;
+	
+	@Autowired
+	private JobScheduler scheduler;
+
+    @RequestMapping("/schedule")
+    public Map<String, Object> setSchedule(@RequestParam Map<String, String> param) {
+    	Decoder dec = Base64.getDecoder();
+    	String cron = new String(dec.decode(param.get("cron")));
+    	logger.info("#### REQUESTED REST API [/schedule] CRON=" + cron);
+ 
+    	scheduler.setCron(cron);
+
+    	JobExecution exec = executor.getStatus();
+    	return getStatus(exec);
+    }
 
     @RequestMapping("/start")
     public Map<String, Object> doStart(@RequestParam Map<String, String> param) {
@@ -84,7 +101,6 @@ public class JobController implements JobCaller{
 			logger.info("#### CONTROLLER JOB COMPLETED in FAIL!!!!\n" + getStatus(exec));
 		}
 	}
-
 
 	@Override
 	public String getCallerName() {

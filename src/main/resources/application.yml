@@ -4,7 +4,7 @@ spring:
       enabled: false
 
 server:
-  port: 8081
+  port: 9091
   
 jasypt:
   encryptor:
@@ -13,19 +13,24 @@ jasypt:
 
 meta:
   datasource:
-    driver-class-name: org.sqlite.JDBC
-    url: jdbc:sqlite:C:/_github/batch-sample/data/batch-meta.db
-    username: ENC(HN3Y5j1JRF4y3DRXoPIJrA==)
-    password: ENC(ajOdzzD7FDVoZ6SZegisXw==)
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://127.0.0.1:3306/jside
+    username: batch
+    password: batch123
+  admin-url: http://127.0.0.1:9090/regist
+  callback-url: http://127.0.0.1:9091/
 
 jobs:
   datasource:
     driver-class-name: org.sqlite.JDBC
-    url: jdbc:sqlite:C:/_github/batch-sample/data/batch-jobs.db
+    url: jdbc:sqlite:D:/data/batch-jobs.db
     username: ENC(HN3Y5j1JRF4y3DRXoPIJrA==)
     password: ENC(ajOdzzD7FDVoZ6SZegisXw==)
-    populator: C:/_github/batch-sample/data/step2-schema.sql
+    populator: D:data/step2-schema.sql
   file:
-    step1-input: C:/_github/batch-sample/data/step1-input-mass.csv
-    step1-output: C:/_github/batch-sample/data/step1-output.xml
-    step3-output: C:/_github/batch-sample/data/step3-output.json
+    step1-input: D:/data/step1-input.csv
+    step1-output: D:/data/step1-output.xml
+    step2-schema: D:data/step2-schema.sql
+    step3-output: D:data/step3-output.json
+  create-tables: false
+  schedule: "0 0/30 * * * ?"

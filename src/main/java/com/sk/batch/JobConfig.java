@@ -1,5 +1,7 @@
 package com.sk.batch;
 
+import java.net.MalformedURLException;
+
 import javax.sql.DataSource;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -33,6 +35,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.jdbc.datasource.init.DataSourceInitializer;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 
 import com.sk.batch.step.CsvToXmlProcessor;
@@ -45,9 +49,9 @@ import com.sk.batch.step.UserXml;
 import com.sk.batch.step.XmlToDbProcessor;
 import com.sk.batch.step.XmlToJsonProcessor;
 
-@Configuration @Import(MetaConfig.class)
+@Configuration 
+@Import(MetaConfig.class)
 public class JobConfig {
-	public static final String SCHEDULE = "0 0/10 * * * ?";
 	public static final String DATEFORMAT = "yyyy-MM-dd HH:mm:00";
 	
 	@Autowired
@@ -59,10 +63,16 @@ public class JobConfig {
     @Value("file:${jobs.file.step1-output}")
     private Resource outputStep1;
 
+    @Value("file:${jobs.file.step2-schema}")
+    private Resource schemaStep2;
+
     @Value("file:${jobs.file.step3-output}")
     private Resource outputStep3;
 
-	@Autowired
+    @Value("${jobs.create-tables}")
+    private boolean needsInit;
+
+    @Autowired
 	StepBuilderFactory stepBuilderFactory;
 
 	@Autowired @Qualifier("metaJobBuilderFactory")
@@ -79,6 +89,20 @@ public class JobConfig {
         dataSource.setUsername(env.getProperty("jobs.datasource.username"));
         dataSource.setPassword(env.getProperty("jobs.datasource.password"));
         return dataSource;
+    }
+
+    @Bean @Qualifier("jobDataSourceInitializer")
+    public DataSourceInitializer jobDataSourceInitializer(@Qualifier("jobDataSource") DataSource dataSource) throws MalformedURLException {
+        ResourceDatabasePopulator databasePopulator = new ResourceDatabasePopulator();
+        databasePopulator.addScript(schemaStep2);
+        databasePopulator.setIgnoreFailedDrops(true);
+
+        DataSourceInitializer initializer = new DataSourceInitializer();
+        initializer.setDataSource(dataSource);
+        if(needsInit) {
+        	initializer.setDatabasePopulator(databasePopulator);
+        }
+         return initializer;
     }
 
     @Bean @Qualifier("jobJdbcTemplate")
