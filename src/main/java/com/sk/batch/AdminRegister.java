@@ -35,6 +35,7 @@ public class AdminRegister extends Thread {
 	
 			StringBuffer buff = new StringBuffer(env.getProperty("meta.admin-url"));
 			buff.append("?job=" + enc.encodeToString(job.getName().getBytes()));
+			buff.append("&desc=" + enc.encodeToString("some job description".getBytes()));
 			buff.append("&callback=" + enc.encodeToString(env.getProperty("meta.callback-url").getBytes()));
 			buff.append("&cron=" + enc.encodeToString(env.getProperty("jobs.schedule").getBytes()));
 			

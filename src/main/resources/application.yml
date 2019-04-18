@@ -33,4 +33,4 @@ jobs:
     step2-schema: D:data/step2-schema.sql
     step3-output: D:data/step3-output.json
   create-tables: false
-  schedule: "0 0/30 * * * ?"
+  schedule: "0 0/10 * * * ?"

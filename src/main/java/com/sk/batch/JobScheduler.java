@@ -24,9 +24,10 @@ import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.config.ScheduledTask;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 @Import(JobConfig.class)
-@Component
+@Service
 public class JobScheduler implements JobCaller, SchedulingConfigurer {
 	private Logger logger = LoggerFactory.getLogger(JobScheduler.class);
 
