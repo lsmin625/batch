@@ -45,19 +45,13 @@ public class JobScheduler implements JobCaller, SchedulingConfigurer {
 	
     private ScheduledTaskRegistrar taskRegistrar;
     
-    @PostConstruct
-    public void registToAdmin() {
-    	AdminRegister register = new AdminRegister(env, sampleJob, this);
-    	register.start();
-    }
-    
     @Override
 	public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
     	this.taskRegistrar = taskRegistrar;
         taskRegistrar.setScheduler(taskExecutor);
 		List<CronTask> tasks = taskRegistrar.getCronTaskList();
         logger.info("#### INIT CONFIG CRON TASK COUNT=" + tasks.size());
-//      setCron(env.getProperty("jobs.schedule"));
+        setCron(env.getProperty("jobs.schedule"));
  	}
 
 	public void setCron(String cron) {

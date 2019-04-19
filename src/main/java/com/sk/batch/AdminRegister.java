@@ -10,25 +10,30 @@ import java.util.Base64.Encoder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.batch.core.Job;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
-public class AdminRegister extends Thread {
+@Component
+public class AdminRegister implements CommandLineRunner {
 	private Logger logger = LoggerFactory.getLogger(JobController.class);
+	
+	@Autowired
 	private Environment env;
+
+	@Autowired
 	private Job job;
+
+	@Autowired
 	private JobScheduler scheduler;
 
-	public AdminRegister(Environment env, Job job, JobScheduler scheduler){
-		this.env = env;
-		this.job = job;
-		this.scheduler = scheduler;
-	}
-
-	public void run() {
+	@Override
+	public void run(String... args) throws Exception {
 		try {
 		    Thread.sleep(5000);
 			Encoder enc = Base64.getEncoder();
@@ -61,7 +66,7 @@ public class AdminRegister extends Thread {
 				    }
 				}
 			    catch(Exception e) {
-					logger.error("#### BATCH ADMIN URL ERROR", e);;
+					logger.error("#### BATCH ADMIN URL TIMEOUT");;
 			    }
 			    Thread.sleep(5000);
 			}
