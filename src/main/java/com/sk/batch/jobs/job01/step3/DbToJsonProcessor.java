@@ -1,11 +1,11 @@
-package com.sk.batch.step;
+package com.sk.batch.jobs.job01.step3;
 
 import org.springframework.batch.item.ItemProcessor;
 
-import com.sk.batch.step.UserJson;
-import com.sk.batch.step.UserXml;
+import com.sk.batch.jobs.job01.data.UserJson;
+import com.sk.batch.jobs.job01.data.UserXml;
 
-public class XmlToJsonProcessor implements ItemProcessor<UserXml, UserJson> {
+public class DbToJsonProcessor implements ItemProcessor<UserXml, UserJson> {
 
 	@Override
 	public UserJson process(UserXml item) throws Exception {

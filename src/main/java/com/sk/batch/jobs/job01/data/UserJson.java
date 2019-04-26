@@ -1,25 +1,25 @@
-package com.sk.batch.step;
+package com.sk.batch.jobs.job01.data;
 
 import java.util.Date;
-
-import javax.xml.bind.annotation.XmlRootElement;
 
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter @Getter @XmlRootElement(name = "user")
-public class UserXml {
+//@JsonTypeName("user") 
+//@JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
+@Setter @Getter 
+public class UserJson {
     private String userName;
     private int userId;
     private Date transactionDate;
     private double transactionAmount;
     private Date updatedDate;
+    private String userGroup;
  
     @Override
     public String toString() {
-        return "UserXml [username=" + userName + ", userId=" + userId
+        return "UserJson [username=" + userName + ", userId=" + userId
           + ", transactionDate=" + transactionDate + ", transactionAmount=" + transactionAmount
-          + ", updatedDate=" + updatedDate+ "]";
+          + ", updatedDate=" + updatedDate + ", userGroup=" + userGroup + "]";
     }
-
 }

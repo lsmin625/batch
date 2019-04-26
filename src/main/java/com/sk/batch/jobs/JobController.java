@@ -1,4 +1,4 @@
-package com.sk.batch;
+package com.sk.batch.jobs;
 
 import java.text.SimpleDateFormat;
 import java.util.Base64;
@@ -9,58 +9,94 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sk.batch.admin.TriggerJobInfo;
+import com.sk.batch.admin.TriggerJobList;
+
 @RestController
-@Import(JobScheduler.class)
 public class JobController implements JobCaller{
 	private Logger logger = LoggerFactory.getLogger(JobController.class);
 	
-	@Autowired
-	private Job sampleJob;
- 
 	@Autowired
 	private JobExecutor executor;
 	
 	@Autowired
 	private JobScheduler scheduler;
 
+	@Autowired
+	private TriggerJobList jobList;
+
     @RequestMapping("/schedule")
     public Map<String, Object> setSchedule(@RequestParam Map<String, String> param) {
+    	String job = param.get("job");
+    	if(job == null || job.equals("")) {
+    		return getError("job missed");
+    	}
+    	TriggerJobInfo jobInfo = jobList.get(job);
+    	if(jobInfo == null) {
+    		return getError("job unknown");
+    	}
+
     	Decoder dec = Base64.getDecoder();
     	String cron = new String(dec.decode(param.get("cron")));
-    	logger.info("#### REQUESTED REST API [/schedule] CRON=" + cron);
+    	logger.info("#### REQUESTED REST API [/schedule] JOB=" + job + ", CRON=" + cron);
  
-    	scheduler.setCron(cron);
+    	scheduler.setCron(jobInfo.getJob(), cron);
 
-    	JobExecution exec = executor.getStatus();
+    	JobExecution exec = executor.getStatus(jobInfo.getJob());
     	return getStatus(exec);
     }
 
     @RequestMapping("/start")
     public Map<String, Object> doStart(@RequestParam Map<String, String> param) {
-    	logger.info("#### REQUESTED REST API [/start]");
-    	JobExecution exec = executor.execute(sampleJob, this);
+    	String job = param.get("job");
+    	if(job == null || job.equals("")) {
+    		return getError("job missed");
+    	}
+    	TriggerJobInfo jobInfo = jobList.get(job);
+    	if(jobInfo == null) {
+    		return getError("job unknown");
+    	}
+
+    	logger.info("#### REQUESTED REST API [/start] JOB=" + job);
+    	JobExecution exec = executor.execute(jobInfo.getJob(), this);
 		return getStatus(exec);
     }
 
     @RequestMapping("/status")
     public Map<String, Object> doStatus(@RequestParam Map<String, String> param) {
-    	logger.info("#### REQUESTED REST API [/status]");
-    	JobExecution exec = executor.getStatus();
+    	String job = param.get("job");
+    	if(job == null || job.equals("")) {
+    		return getError("job missed");
+    	}
+    	TriggerJobInfo jobInfo = jobList.get(job);
+    	if(jobInfo == null) {
+    		return getError("job unknown");
+    	}
+
+    	logger.info("#### REQUESTED REST API [/status] JOB=" + job);
+    	JobExecution exec = executor.getStatus(jobInfo.getJob());
 		return getStatus(exec);
     }
 
     @RequestMapping("/stop")
     public Map<String, Object> doStop(@RequestParam Map<String, String> param) {
-    	logger.info("#### REQUESTED REST API [/stop]");
-     	JobExecution exec = executor.forceToStop();
+    	String job = param.get("job");
+    	if(job == null || job.equals("")) {
+    		return getError("job missed");
+    	}
+    	TriggerJobInfo jobInfo = jobList.get(job);
+    	if(jobInfo == null) {
+    		return getError("job unknown");
+    	}
+
+    	logger.info("#### REQUESTED REST API [/stop] JOB=" + job);
+     	JobExecution exec = executor.forceToStop(jobInfo.getJob());
 		return getStatus(exec);
     }
 
@@ -84,6 +120,13 @@ public class JobController implements JobCaller{
     		obj.put("status", "unknown");
     	}
 
+    	return obj;
+    }
+
+    private Map<String, Object> getError(String error) {
+    	Map<String, Object> obj = new HashMap<String, Object>();
+   		obj.put("status", "unknown");
+   		obj.put("error", error);
     	return obj;
     }
 

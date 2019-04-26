@@ -1,4 +1,4 @@
-package com.sk.batch;
+package com.sk.batch.jobs;
 
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListenerSupport;

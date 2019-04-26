@@ -1,4 +1,4 @@
-package com.sk.batch;
+package com.sk.batch.jobs.job01;
 
 import java.net.MalformedURLException;
 
@@ -32,44 +32,36 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
-import org.springframework.core.io.Resource;
+import org.springframework.core.io.FileUrlResource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 
-import com.sk.batch.step.CsvToXmlProcessor;
-import com.sk.batch.step.User;
-import com.sk.batch.step.UserFieldSetMapper;
-import com.sk.batch.step.UserJson;
-import com.sk.batch.step.UserPrepareStatementSetter;
-import com.sk.batch.step.UserRowMapper;
-import com.sk.batch.step.UserXml;
-import com.sk.batch.step.XmlToDbProcessor;
-import com.sk.batch.step.XmlToJsonProcessor;
+import com.sk.batch.admin.AdminConfig;
+import com.sk.batch.admin.TriggerJobInfo;
+import com.sk.batch.admin.TriggerJobList;
+import com.sk.batch.jobs.JobFinishedListener;
+import com.sk.batch.jobs.job01.data.User;
+import com.sk.batch.jobs.job01.data.UserJson;
+import com.sk.batch.jobs.job01.data.UserXml;
+import com.sk.batch.jobs.job01.step1.CsvToXmlProcessor;
+import com.sk.batch.jobs.job01.step1.UserFieldSetMapper;
+import com.sk.batch.jobs.job01.step2.UserPrepareStatementSetter;
+import com.sk.batch.jobs.job01.step2.XmlToDbProcessor;
+import com.sk.batch.jobs.job01.step3.DbToJsonProcessor;
+import com.sk.batch.jobs.job01.step3.UserRowMapper;
 
 @Configuration 
-@Import(MetaConfig.class)
+@Import(AdminConfig.class)
 public class JobConfig {
 	public static final String DATEFORMAT = "yyyy-MM-dd HH:mm:00";
 	
 	@Autowired
 	private Environment env;
 
-    @Value("file:${jobs.file.step1-input}")
-    private Resource inputStep1;
- 
-    @Value("file:${jobs.file.step1-output}")
-    private Resource outputStep1;
-
-    @Value("file:${jobs.file.step2-schema}")
-    private Resource schemaStep2;
-
-    @Value("file:${jobs.file.step3-output}")
-    private Resource outputStep3;
-
-    @Value("${jobs.create-tables}")
+	@Value("${jobs.create-tables}")
     private boolean needsInit;
 
     @Autowired
@@ -80,7 +72,10 @@ public class JobConfig {
 
 	@Autowired
 	private JobFinishedListener jobListener;
-	
+
+	@Autowired
+	private TriggerJobList jobList;
+
     @Bean @Qualifier("jobDataSource")
     public DataSource jobDataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
@@ -94,7 +89,7 @@ public class JobConfig {
     @Bean @Qualifier("jobDataSourceInitializer")
     public DataSourceInitializer jobDataSourceInitializer(@Qualifier("jobDataSource") DataSource dataSource) throws MalformedURLException {
         ResourceDatabasePopulator databasePopulator = new ResourceDatabasePopulator();
-        databasePopulator.addScript(schemaStep2);
+        databasePopulator.addScript(new FileUrlResource(env.getProperty("jobs.file.step2-schema")));
         databasePopulator.setIgnoreFailedDrops(true);
 
         DataSourceInitializer initializer = new DataSourceInitializer();
@@ -112,7 +107,7 @@ public class JobConfig {
     }
 
     @Bean @Qualifier("step1Reader")
-    public ItemReader<User> step1Reader() {
+    public ItemReader<User> step1Reader() throws MalformedURLException {
         DelimitedLineTokenizer tokenizer = new DelimitedLineTokenizer();  //default delimiter is comma(','); if any other, use .setDelimiter('')
         tokenizer.setNames(new String[]{"userName", "userId", "transactionDate", "transactionAmount"});
         
@@ -122,7 +117,7 @@ public class JobConfig {
 
         FlatFileItemReader<User> reader = new FlatFileItemReader<User>();
         reader.setLineMapper(lineMapper);
-        reader.setResource(inputStep1);
+        reader.setResource(new FileUrlResource(env.getProperty("jobs.file.step1-input")));
         reader.setLinesToSkip(1);
         return reader;
     }
@@ -133,14 +128,14 @@ public class JobConfig {
     }
  
     @Bean @Qualifier("step1Writer")
-    public ItemWriter<UserXml> step1Writer() {
+    public ItemWriter<UserXml> step1Writer() throws MalformedURLException {
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
         marshaller.setClassesToBeBound(new Class[] { UserXml.class });
 
         StaxEventItemWriter<UserXml> writer = new StaxEventItemWriter<UserXml>();
         writer.setMarshaller(marshaller);
         writer.setRootTagName("userlist");
-        writer.setResource(outputStep1);
+        writer.setResource(new FileUrlResource(env.getProperty("jobs.file.step1-output")));
         return writer;
     }
  
@@ -158,12 +153,12 @@ public class JobConfig {
     }
  
     @Bean @Qualifier("step2Reader")
-    public ItemReader<UserXml> step2Reader() {
+    public ItemReader<UserXml> step2Reader() throws MalformedURLException {
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
         marshaller.setClassesToBeBound(new Class[] { UserXml.class });
 
         StaxEventItemReader<UserXml> reader = new StaxEventItemReader<UserXml>();
-    	reader.setResource(outputStep1);
+    	reader.setResource(new FileUrlResource(env.getProperty("jobs.file.step1-output")));
     	reader.setFragmentRootElementName("user");
     	reader.setUnmarshaller(marshaller);
         return reader;
@@ -214,12 +209,13 @@ public class JobConfig {
  
     @Bean @Qualifier("step3Processor")
     public ItemProcessor<UserXml, UserJson> step3Processor() {
-        return new XmlToJsonProcessor();
+        return new DbToJsonProcessor();
     }
  
     @Bean @Qualifier("step3Writer")
-    public ItemWriter<UserJson> step3Writer() {
-        JsonFileItemWriter<UserJson> writer = new JsonFileItemWriter<UserJson>(outputStep3, new JacksonJsonObjectMarshaller<UserJson>());
+    public ItemWriter<UserJson> step3Writer() throws MalformedURLException {
+    	FileUrlResource resource = new FileUrlResource(env.getProperty("jobs.file.step3-output"));
+        JsonFileItemWriter<UserJson> writer = new JsonFileItemWriter<UserJson>(resource, new JacksonJsonObjectMarshaller<UserJson>());
        	return writer;
     }
 
@@ -236,11 +232,11 @@ public class JobConfig {
         return simpleStepBuilder.build();
     }
 
- 	@Bean @Qualifier("sampleBatchJob")
-    public Job sampleBatchJob(@Qualifier("step1") Step step1, 
+ 	@Bean @Qualifier("job01")
+    public Job job01(@Qualifier("step1") Step step1, 
     		@Qualifier("step2") Step step2, @Qualifier("step3") Step step3) {
 
- 		JobBuilder jobBuilder = jobBuilderFactory.get("sampleBatchJob");
+ 		JobBuilder jobBuilder = jobBuilderFactory.get("job01");
         jobBuilder.incrementer(new RunIdIncrementer());
         jobBuilder.preventRestart();
         jobBuilder.listener(jobListener);
@@ -251,6 +247,18 @@ public class JobConfig {
         jobFlowBuilder.end();
         
         FlowJobBuilder flowJobBuilder = jobFlowBuilder.build();
-        return flowJobBuilder.build();
+        Job job = flowJobBuilder.build();
+        
+        TriggerJobInfo jobInfo = new TriggerJobInfo();
+        jobInfo.setName(job.getName());
+        jobInfo.setDesc("Sample Job with 3 steps");
+        jobInfo.setMode("self");
+        jobInfo.setCron("0 0/5 * * * ?");
+        jobInfo.setAdminUrl("http://127.0.0.1:9090/regist");
+        jobInfo.setCallbackUrl("http://127.0.0.1:9091/");
+        jobInfo.setJob(job);
+        jobList.put("job01", jobInfo);
+        
+        return job;
     }
  }

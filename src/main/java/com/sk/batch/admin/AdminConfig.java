@@ -1,4 +1,4 @@
-package com.sk.batch;
+package com.sk.batch.admin;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -13,7 +13,6 @@ import org.springframework.batch.core.repository.support.JobRepositoryFactoryBea
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
@@ -24,7 +23,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
-public class MetaConfig implements EnvironmentAware{
+public class AdminConfig implements EnvironmentAware{
 
 	@Autowired
 	private Environment env;
@@ -36,10 +35,16 @@ public class MetaConfig implements EnvironmentAware{
 
     @Bean(destroyMethod = "shutdown")
     public Executor taskExecutor() {
-        return Executors.newScheduledThreadPool(100);
+        return Executors.newScheduledThreadPool(10);
     }
 
-	@Bean
+    @Bean
+    public TriggerJobList triggerJobList() {
+    	TriggerJobList jobList = new TriggerJobList();
+        return jobList;
+    }
+
+    @Bean
 	public StandardPBEStringEncryptor jasyptEncryptor() {
         StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();  
         encryptor.setPassword(env.getProperty("jasypt.encryptor.secret"));  

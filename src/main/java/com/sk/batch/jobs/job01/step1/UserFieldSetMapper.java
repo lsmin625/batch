@@ -1,4 +1,4 @@
-package com.sk.batch.step;
+package com.sk.batch.jobs.job01.step1;
 
 import java.text.SimpleDateFormat;
 import org.springframework.batch.item.ParseException;
@@ -6,7 +6,7 @@ import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.FieldSet;
 import org.springframework.validation.BindException;
 
-import com.sk.batch.step.User;
+import com.sk.batch.jobs.job01.data.User;
 
 public class UserFieldSetMapper implements FieldSetMapper<User> {
 

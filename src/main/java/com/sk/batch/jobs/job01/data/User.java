@@ -1,4 +1,4 @@
-package com.sk.batch.step;
+package com.sk.batch.jobs.job01.data;
 
 import java.util.Date;
 import lombok.Setter;

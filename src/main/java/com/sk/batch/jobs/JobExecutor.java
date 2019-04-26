@@ -1,7 +1,8 @@
-package com.sk.batch;
+package com.sk.batch.jobs;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Hashtable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +13,10 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Service;
 
-@Import(JobConfig.class)
+import com.sk.batch.jobs.job01.JobConfig;
+
 @Service
 public class JobExecutor {
 	private Logger logger = LoggerFactory.getLogger(JobExecutor.class);
@@ -26,11 +27,12 @@ public class JobExecutor {
 	@Autowired
 	private JobFinishedListener listener;
 	
-	private JobExecution jobExecution;
+	private Hashtable<Job, JobExecution> execTable = new Hashtable<Job, JobExecution>();
 
     public synchronized JobExecution execute(Job job, JobCaller caller) {
+    	JobExecution jobExecution = execTable.get(job);
     	if(jobExecution != null && (jobExecution.isRunning() || jobExecution.isStopping())) {
-			logger.info("#### JOB IS RUNNING...IGNORED REQUEST FROM: " + caller.getCallerName());
+			logger.info("#### JOB IS RUNNING...IGNORED REQUEST FROM CALLER=" + caller.getCallerName() + ", JOB=" + job.getName());
     		return jobExecution;
     	}
  		try {
@@ -41,6 +43,8 @@ public class JobExecutor {
 			para.addString("LAUNCH-TIME", formatter.format(new Date()));
 			para.addString("CALLER", caller.getCallerName());
 			jobExecution = jobLauncher.run(job, para.toJobParameters());
+			execTable.put(job, jobExecution);
+			
 			return jobExecution;
 		} catch (JobRestartException e) {
 			logger.info("#### JOB INSTANCE DUPLICATED!!!");
@@ -51,7 +55,8 @@ public class JobExecutor {
  		return null;
     }
     
-    public synchronized JobExecution getStatus() {
+    public synchronized JobExecution getStatus(Job job) {
+    	JobExecution jobExecution = execTable.get(job);
     	if(jobExecution != null) {
     		return jobExecution;
     	}
@@ -60,7 +65,8 @@ public class JobExecutor {
     	}
     }
    
-    public JobExecution forceToStop() {
+    public JobExecution forceToStop(Job job) {
+    	JobExecution jobExecution = execTable.get(job);
     	if(jobExecution != null && jobExecution.isRunning()) {
     		jobExecution.stop();
     	}
