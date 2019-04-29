@@ -30,6 +30,7 @@ public class AdminRegister implements CommandLineRunner {
 	@Autowired
 	private TriggerJobList triggerJobList;
 	
+	private static Encoder Enc = Base64.getEncoder();
 	private boolean notRegistered = true;
 
 	@Override
@@ -39,57 +40,64 @@ public class AdminRegister implements CommandLineRunner {
 			setSelfCron();
 			
 			while(notRegistered) {
-				try {
-					Enumeration<String> keys = triggerJobList.keys();
-					while(keys.hasMoreElements()) {
-						String job = keys.nextElement();
-						TriggerJobInfo jobInfo = triggerJobList.get(job);
-						
-						URL url = new URL(getParameter(jobInfo));
-						logger.info("#### BATCH ADMIN URL=" + url.toString());
-						HttpURLConnection conn;
-						conn = (HttpURLConnection) url.openConnection();
-						conn.setRequestMethod("GET");
-				        conn.setConnectTimeout(1000);
-					    conn.setReadTimeout(1000);
-					    if(conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
-					    	String res = getResponse(conn);
-					    	logger.info("#### BATCH ADMIN CONNECTED OK=" + res);
-					    	JsonParser parser = new JsonParser();
-					    	JsonElement element = parser.parse(res);
-					    	String cron = element.getAsJsonObject().get("cron").getAsString();
-					    	scheduler.setCron(jobInfo, cron);
-						    notRegistered = false;
-						    Thread.sleep(1000);
-					    }
-					}
+				Enumeration<String> keys = triggerJobList.keys();
+				while(keys.hasMoreElements()) {
+					String job = keys.nextElement();
+					TriggerJobInfo jobInfo = triggerJobList.get(job);
+					if(registToAdmin(jobInfo)) {
+					    notRegistered = false;
+				    }
+				    Thread.sleep(1000);
 				}
-			    catch(Exception e) {
-					logger.error("#### BATCH ADMIN URL TIMEOUT");;
-			    }
 			    Thread.sleep(30000);
 			}
 		} catch (Exception e) {
 			logger.error("#### BATCH ADMIN URL ERROR", e);;
 		}
 	}
+	
+	private boolean registToAdmin(TriggerJobInfo jobInfo) {
+		try {
+			URL url = new URL(getParameter(jobInfo));
+			logger.info("#### BATCH ADMIN URL=" + url.toString());
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("GET");
+	        conn.setConnectTimeout(1000);
+		    conn.setReadTimeout(1000);
+		    if(conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+		    	String res = getResponse(conn);
+		    	logger.info("#### BATCH ADMIN CONNECTED OK=" + res);
+		    	JsonParser parser = new JsonParser();
+		    	JsonElement element = parser.parse(res);
+		    	String cron = element.getAsJsonObject().get("cron").getAsString();
+		    	scheduler.setCron(jobInfo, cron);
+			    return true;
+		    }
+		}
+	    catch(Exception e) {
+			logger.error("#### BATCH ADMIN URL TIMEOUT");;
+	    }
+		return false;
+	}
+
 	private void setSelfCron() {
 		Enumeration<String> keys = triggerJobList.keys();
 		while(keys.hasMoreElements()) {
 			String job = keys.nextElement();
 			TriggerJobInfo jobInfo = triggerJobList.get(job);
-	    	scheduler.setCron(jobInfo, jobInfo.getCron());
+			if(jobInfo.getMode().equalsIgnoreCase("self")) {
+		    	scheduler.setCron(jobInfo, jobInfo.getCron());
+			}
 		}
 	}
 	
 	private String getParameter(TriggerJobInfo jobInfo) {
-		Encoder enc = Base64.getEncoder();
-
 		StringBuffer buff = new StringBuffer(jobInfo.getAdminUrl());
-		buff.append("?job=" + enc.encodeToString(jobInfo.getName().getBytes()));
-		buff.append("&desc=" + enc.encodeToString(jobInfo.getDesc().getBytes()));
-		buff.append("&callback=" + enc.encodeToString(jobInfo.getCallbackUrl().getBytes()));
-		buff.append("&cron=" + enc.encodeToString(jobInfo.getCron().getBytes()));
+		buff.append("?job=" + Enc.encodeToString(jobInfo.getName().getBytes()));
+		buff.append("&desc=" + Enc.encodeToString(jobInfo.getDesc().getBytes()));
+		buff.append("&mode=" + Enc.encodeToString(jobInfo.getMode().getBytes()));
+		buff.append("&cron=" + Enc.encodeToString(jobInfo.getCron().getBytes()));
+		buff.append("&callback=" + Enc.encodeToString(jobInfo.getCallbackUrl().getBytes()));
 		
 		return buff.toString();
 	}
