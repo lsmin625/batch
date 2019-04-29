@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.explore.JobExplorer;
+import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,9 +29,17 @@ public class JobController implements JobCaller{
 	
 	@Autowired
 	private JobScheduler scheduler;
+	
+	@Autowired
+	private JobOperator jobOperator;
+	
+	@Autowired
+	private JobExplorer jobExplorer;
 
 	@Autowired
-	private TriggerJobList jobList;
+	private TriggerJobList triggerJobList;
+
+	private static Decoder Dec = Base64.getDecoder();
 
     @RequestMapping("/schedule")
     public Map<String, Object> setSchedule(@RequestParam Map<String, String> param) {
@@ -37,19 +47,19 @@ public class JobController implements JobCaller{
     	if(job == null || job.equals("")) {
     		return getError("job missed");
     	}
-    	TriggerJobInfo jobInfo = jobList.get(job);
+//    	TriggerJobInfo jobInfo = triggerJobList.get(Dec.decode(job));
+    	TriggerJobInfo jobInfo = triggerJobList.get(job);
     	if(jobInfo == null) {
     		return getError("job unknown");
     	}
 
-    	Decoder dec = Base64.getDecoder();
-    	String cron = new String(dec.decode(param.get("cron")));
+    	String cron = new String(Dec.decode(param.get("cron")));
     	logger.info("#### REQUESTED REST API [/schedule] JOB=" + job + ", CRON=" + cron);
  
-    	scheduler.setCron(jobInfo.getJob(), cron);
+    	scheduler.setCron(jobInfo, cron);
 
     	JobExecution exec = executor.getStatus(jobInfo.getJob());
-    	return getStatus(exec);
+    	return getStatus(jobInfo, exec);
     }
 
     @RequestMapping("/start")
@@ -58,14 +68,15 @@ public class JobController implements JobCaller{
     	if(job == null || job.equals("")) {
     		return getError("job missed");
     	}
-    	TriggerJobInfo jobInfo = jobList.get(job);
+//    	TriggerJobInfo jobInfo = triggerJobList.get(Dec.decode(job));
+    	TriggerJobInfo jobInfo = triggerJobList.get(job);
     	if(jobInfo == null) {
     		return getError("job unknown");
     	}
 
     	logger.info("#### REQUESTED REST API [/start] JOB=" + job);
     	JobExecution exec = executor.execute(jobInfo.getJob(), this);
-		return getStatus(exec);
+		return getStatus(jobInfo, exec);
     }
 
     @RequestMapping("/status")
@@ -74,14 +85,15 @@ public class JobController implements JobCaller{
     	if(job == null || job.equals("")) {
     		return getError("job missed");
     	}
-    	TriggerJobInfo jobInfo = jobList.get(job);
+//    	TriggerJobInfo jobInfo = triggerJobList.get(Dec.decode(job));
+    	TriggerJobInfo jobInfo = triggerJobList.get(job);
     	if(jobInfo == null) {
     		return getError("job unknown");
     	}
 
     	logger.info("#### REQUESTED REST API [/status] JOB=" + job);
     	JobExecution exec = executor.getStatus(jobInfo.getJob());
-		return getStatus(exec);
+		return getStatus(jobInfo, exec);
     }
 
     @RequestMapping("/stop")
@@ -90,19 +102,28 @@ public class JobController implements JobCaller{
     	if(job == null || job.equals("")) {
     		return getError("job missed");
     	}
-    	TriggerJobInfo jobInfo = jobList.get(job);
+//    	TriggerJobInfo jobInfo = triggerJobList.get(Dec.decode(job));
+    	TriggerJobInfo jobInfo = triggerJobList.get(job);
     	if(jobInfo == null) {
     		return getError("job unknown");
     	}
 
     	logger.info("#### REQUESTED REST API [/stop] JOB=" + job);
      	JobExecution exec = executor.forceToStop(jobInfo.getJob());
-		return getStatus(exec);
+		return getStatus(jobInfo, exec);
     }
 
-    private Map<String, Object> getStatus(JobExecution exec) {
+    private Map<String, Object> getStatus(TriggerJobInfo jobInfo, JobExecution exec) {
     	Map<String, Object> obj = new HashMap<String, Object>();
     	SimpleDateFormat form = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    	if(jobInfo != null) {
+    		obj.put("name", jobInfo.getName());
+    		obj.put("description", jobInfo.getDesc());
+    		obj.put("mode", jobInfo.getMode());
+    		obj.put("cron", jobInfo.getCron());
+    		obj.put("admin-url", jobInfo.getAdminUrl());
+    		obj.put("callback-url", jobInfo.getCallbackUrl());
+    	}
     	if(exec != null) {
     		if(exec.getCreateTime() != null) {
     			obj.put("create-time", form.format(exec.getCreateTime()));
@@ -132,16 +153,16 @@ public class JobController implements JobCaller{
 
 	@Override
 	public void jobStarted(JobExecution exec) {
-		logger.info("#### CONTROLLER JOB STARTED\n" + getStatus(exec));
+		logger.info("#### CONTROLLER JOB STARTED\n" + getStatus(null, exec));
 	}
 
 	@Override
 	public void jobFinished(JobExecution exec) {
 		if(exec.getStatus() == BatchStatus.COMPLETED) {
-			logger.info("#### CONTROLLER JOB COMPLETED in SUCCESS!\n" + getStatus(exec));
+			logger.info("#### CONTROLLER JOB COMPLETED in SUCCESS!\n" + getStatus(null, exec));
 		}
 		else {
-			logger.info("#### CONTROLLER JOB COMPLETED in FAIL!!!!\n" + getStatus(exec));
+			logger.info("#### CONTROLLER JOB COMPLETED in FAIL!!!!\n" + getStatus(null, exec));
 		}
 	}
 

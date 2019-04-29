@@ -5,7 +5,7 @@ import org.springframework.batch.item.ItemProcessor;
 import com.sk.batch.jobs.job01.data.UserJson;
 import com.sk.batch.jobs.job01.data.UserXml;
 
-public class DbToJsonProcessor implements ItemProcessor<UserXml, UserJson> {
+public class DbToJsonProcessor<T1, T2> implements ItemProcessor<UserXml, UserJson> {
 
 	@Override
 	public UserJson process(UserXml item) throws Exception {

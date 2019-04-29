@@ -28,7 +28,7 @@ public class AdminRegister implements CommandLineRunner {
 	private JobScheduler scheduler;
 
 	@Autowired
-	private TriggerJobList jobList;
+	private TriggerJobList triggerJobList;
 	
 	private boolean notRegistered = true;
 
@@ -40,10 +40,10 @@ public class AdminRegister implements CommandLineRunner {
 			
 			while(notRegistered) {
 				try {
-					Enumeration<String> keys = jobList.keys();
+					Enumeration<String> keys = triggerJobList.keys();
 					while(keys.hasMoreElements()) {
 						String job = keys.nextElement();
-						TriggerJobInfo jobInfo = jobList.get(job);
+						TriggerJobInfo jobInfo = triggerJobList.get(job);
 						
 						URL url = new URL(getParameter(jobInfo));
 						logger.info("#### BATCH ADMIN URL=" + url.toString());
@@ -58,7 +58,7 @@ public class AdminRegister implements CommandLineRunner {
 					    	JsonParser parser = new JsonParser();
 					    	JsonElement element = parser.parse(res);
 					    	String cron = element.getAsJsonObject().get("cron").getAsString();
-					    	scheduler.setCron(jobInfo.getJob(), cron);
+					    	scheduler.setCron(jobInfo, cron);
 						    notRegistered = false;
 						    Thread.sleep(1000);
 					    }
@@ -67,18 +67,18 @@ public class AdminRegister implements CommandLineRunner {
 			    catch(Exception e) {
 					logger.error("#### BATCH ADMIN URL TIMEOUT");;
 			    }
-			    Thread.sleep(5000);
+			    Thread.sleep(30000);
 			}
 		} catch (Exception e) {
 			logger.error("#### BATCH ADMIN URL ERROR", e);;
 		}
 	}
 	private void setSelfCron() {
-		Enumeration<String> keys = jobList.keys();
+		Enumeration<String> keys = triggerJobList.keys();
 		while(keys.hasMoreElements()) {
 			String job = keys.nextElement();
-			TriggerJobInfo jobInfo = jobList.get(job);
-	    	scheduler.setCron(jobInfo.getJob(), jobInfo.getCron());
+			TriggerJobInfo jobInfo = triggerJobList.get(job);
+	    	scheduler.setCron(jobInfo, jobInfo.getCron());
 		}
 	}
 	

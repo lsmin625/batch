@@ -3,9 +3,14 @@ package com.sk.batch.admin;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.explore.JobExplorer;
+import org.springframework.batch.core.explore.support.SimpleJobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
@@ -20,10 +25,13 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.CronTask;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
-public class AdminConfig implements EnvironmentAware{
+public class AdminConfig implements EnvironmentAware {
 
 	@Autowired
 	private Environment env;
@@ -33,15 +41,15 @@ public class AdminConfig implements EnvironmentAware{
         this.env = env;
     }
 
-    @Bean(destroyMethod = "shutdown")
+    @Bean(destroyMethod="shutdown")
     public Executor taskExecutor() {
-        return Executors.newScheduledThreadPool(10);
+        return Executors.newScheduledThreadPool(42);
     }
 
     @Bean
     public TriggerJobList triggerJobList() {
-    	TriggerJobList jobList = new TriggerJobList();
-        return jobList;
+    	TriggerJobList triggerJobList = new TriggerJobList();
+        return triggerJobList;
     }
 
     @Bean
@@ -52,8 +60,8 @@ public class AdminConfig implements EnvironmentAware{
         return encryptor;
     }
 
-    @Bean @Primary @Qualifier("metaDataSource")
-    public DataSource metaDataSource() {
+    @Bean @Qualifier("metaDataSource")
+    public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName(env.getProperty("meta.datasource.driver-class-name"));
         dataSource.setUrl(env.getProperty("meta.datasource.url"));
@@ -61,16 +69,16 @@ public class AdminConfig implements EnvironmentAware{
         dataSource.setPassword(env.getProperty("meta.datasource.password"));
         return dataSource;
     }
-
-    @Bean @Qualifier("metaTransactionManager")
-    public PlatformTransactionManager metaTransactionManager(@Qualifier("metaDataSource") DataSource dataSource) {
+/*
+    @Bean
+    public PlatformTransactionManager transactionManager(@Qualifier("metaDataSource") DataSource dataSource) {
     	DataSourceTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
         return transactionManager;
     }
-
-    @Bean @Qualifier("metaJobRepository")
-    public JobRepository metaJobRepository(@Qualifier("metaDataSource") DataSource dataSource, 
-    		@Qualifier("metaTransactionManager") PlatformTransactionManager transactionManager) throws Exception {
+    
+     @Bean
+    public JobRepository jobRepository(@Qualifier("metaDataSource") DataSource dataSource, 
+    		PlatformTransactionManager transactionManager) throws Exception {
         JobRepositoryFactoryBean factory = new JobRepositoryFactoryBean();
         factory.setDataSource(dataSource);
         factory.setTransactionManager(transactionManager);
@@ -78,17 +86,14 @@ public class AdminConfig implements EnvironmentAware{
         return (JobRepository) factory.getObject();
     }
 
-    @Bean @Qualifier("metaJobLauncher")
-    public JobLauncher metaJobLauncher(@Qualifier("metaJobRepository") JobRepository metaJobRepository) throws Exception {
+    @Bean
+    public JobLauncher jobLauncher(JobRepository jobRepository) throws Exception {
         SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
-        jobLauncher.setJobRepository(metaJobRepository);
+        jobLauncher.setJobRepository(jobRepository);
 		jobLauncher.setTaskExecutor(new SimpleAsyncTaskExecutor());
         jobLauncher.afterPropertiesSet();
         return jobLauncher;
     }
-
-    @Bean @Qualifier("metaJobBuilderFactory")
-    public JobBuilderFactory metaJobBuilderFactory(@Qualifier("metaJobRepository") JobRepository metaJobRepository) throws Exception {
-        return new JobBuilderFactory(metaJobRepository);
-    }
+*/
+    
 }

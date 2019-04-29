@@ -2,6 +2,7 @@ package com.sk.batch.jobs;
 
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -17,6 +18,8 @@ import org.springframework.scheduling.config.ScheduledTask;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Service;
 
+import com.sk.batch.admin.TriggerJobInfo;
+
 @Service
 public class JobScheduler implements JobCaller, SchedulingConfigurer {
 	private Logger logger = LoggerFactory.getLogger(JobScheduler.class);
@@ -27,33 +30,35 @@ public class JobScheduler implements JobCaller, SchedulingConfigurer {
 	@Autowired
 	private Executor taskExecutor;
 	
+	private static Hashtable<TriggerJobInfo, ScheduledTask> cronTable = new Hashtable<TriggerJobInfo, ScheduledTask>();
     private ScheduledTaskRegistrar taskRegistrar;
-    
+
+
     @Override
 	public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
     	this.taskRegistrar = taskRegistrar;
-        taskRegistrar.setScheduler(taskExecutor);
- 	}
+    	taskRegistrar.setScheduler(taskExecutor);
+    }
 
-	public void setCron(Job job, String cron) {
-		List<CronTask> tasks = taskRegistrar.getCronTaskList();
-        logger.info("#### CONFIG CRON TASK COUNT=" + tasks.size());
-        
-		for(int i = 0; i < tasks.size(); i++) {
-			CronTask task = tasks.get(i);
-			ScheduledTask stask = taskRegistrar.scheduleCronTask(task);
-			stask.cancel();
-		}
-		
-		taskRegistrar.addCronTask(new CronTask(new Runnable() {
-	    	public void run() {
-	    		doJob(job);
-	    	}
-		}, cron));
-		tasks = taskRegistrar.getCronTaskList();
-		logger.info("#### CONFIG CRON TASK COUNT=" + tasks.size());
-        logger.info("#### CONFIG CRON SCHEDULE=" + cron + ", JOB=" + job.getName());
-	}
+	public void setCron(TriggerJobInfo jobInfo, String cron) {
+        logger.info("#### SET CRON JOB=" + jobInfo.getName() + ", CRON=" + cron);
+        if(cronTable.containsKey(jobInfo)) {
+			ScheduledTask schedule = cronTable.get(jobInfo);
+			CronTask task = (CronTask) schedule.getTask();
+            logger.info("#### CANCEL OLD JOB=" + jobInfo.getName() + ", CRON=" + task.getExpression());
+			schedule.cancel();
+        }
+        jobInfo.setCron(cron);
+        ScheduledTask schedule = taskRegistrar.scheduleCronTask(new CronTask(new Runnable() {
+		    public void run() {
+	    		doJob(jobInfo.getJob());
+		    	}
+			}, cron));
+//		taskRegistrar.afterPropertiesSet(); //necessary when use "taskRegistrar.addCronTask()"
+		CronTask task = (CronTask) schedule.getTask();
+        logger.info("#### SET NEW JOB=" + jobInfo.getName() + ", CRON=" + task.getExpression());
+		cronTable.put(jobInfo, schedule);
+ 	}
 
 	public void doJob(Job job) {
     	logger.info("#### DO SCHEDULE JOB=" + job.getName());
