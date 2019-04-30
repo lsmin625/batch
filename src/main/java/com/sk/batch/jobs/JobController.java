@@ -40,6 +40,15 @@ public class JobController implements JobCaller{
 	private TriggerJobList triggerJobList;
 
 	private static Decoder Dec = Base64.getDecoder();
+	
+	private TriggerJobInfo getJobInfo(String job) {
+		for(TriggerJobInfo jobInfo : triggerJobList) {
+			if(job.equalsIgnoreCase(jobInfo.getName())) {
+				return jobInfo;
+			}
+		}
+		return null;
+	}
 
     @RequestMapping("/schedule")
     public Map<String, Object> setSchedule(@RequestParam Map<String, String> param) {
@@ -48,7 +57,7 @@ public class JobController implements JobCaller{
     		return getError("job missed");
     	}
 //    	TriggerJobInfo jobInfo = triggerJobList.get(Dec.decode(job));
-    	TriggerJobInfo jobInfo = triggerJobList.get(job);
+    	TriggerJobInfo jobInfo = getJobInfo(job);
     	if(jobInfo == null) {
     		return getError("job unknown");
     	}
@@ -58,7 +67,7 @@ public class JobController implements JobCaller{
  
     	scheduler.setCron(jobInfo, cron);
 
-    	JobExecution exec = executor.getStatus(jobInfo.getJob());
+    	JobExecution exec = executor.getStatus(jobInfo);
     	return getStatus(jobInfo, exec);
     }
 
@@ -69,13 +78,13 @@ public class JobController implements JobCaller{
     		return getError("job missed");
     	}
 //    	TriggerJobInfo jobInfo = triggerJobList.get(Dec.decode(job));
-    	TriggerJobInfo jobInfo = triggerJobList.get(job);
+    	TriggerJobInfo jobInfo = getJobInfo(job);
     	if(jobInfo == null) {
     		return getError("job unknown");
     	}
 
     	logger.info("#### REQUESTED REST API [/start] JOB=" + job);
-    	JobExecution exec = executor.execute(jobInfo.getJob(), this);
+    	JobExecution exec = executor.execute(jobInfo, this);
 		return getStatus(jobInfo, exec);
     }
 
@@ -86,13 +95,13 @@ public class JobController implements JobCaller{
     		return getError("job missed");
     	}
 //    	TriggerJobInfo jobInfo = triggerJobList.get(Dec.decode(job));
-    	TriggerJobInfo jobInfo = triggerJobList.get(job);
+    	TriggerJobInfo jobInfo = getJobInfo(job);
     	if(jobInfo == null) {
     		return getError("job unknown");
     	}
 
     	logger.info("#### REQUESTED REST API [/status] JOB=" + job);
-    	JobExecution exec = executor.getStatus(jobInfo.getJob());
+    	JobExecution exec = executor.getStatus(jobInfo);
 		return getStatus(jobInfo, exec);
     }
 
@@ -103,13 +112,13 @@ public class JobController implements JobCaller{
     		return getError("job missed");
     	}
 //    	TriggerJobInfo jobInfo = triggerJobList.get(Dec.decode(job));
-    	TriggerJobInfo jobInfo = triggerJobList.get(job);
+    	TriggerJobInfo jobInfo = getJobInfo(job);
     	if(jobInfo == null) {
     		return getError("job unknown");
     	}
 
     	logger.info("#### REQUESTED REST API [/stop] JOB=" + job);
-     	JobExecution exec = executor.forceToStop(jobInfo.getJob());
+     	JobExecution exec = executor.forceToStop(jobInfo);
 		return getStatus(jobInfo, exec);
     }
 
@@ -152,12 +161,12 @@ public class JobController implements JobCaller{
     }
 
 	@Override
-	public void jobStarted(JobExecution exec) {
+	public void jobStarted(TriggerJobInfo jobInfo, JobExecution exec) {
 		logger.info("#### CONTROLLER JOB STARTED\n" + getStatus(null, exec));
 	}
 
 	@Override
-	public void jobFinished(JobExecution exec) {
+	public void jobFinished(TriggerJobInfo jobInfo, JobExecution exec) {
 		if(exec.getStatus() == BatchStatus.COMPLETED) {
 			logger.info("#### CONTROLLER JOB COMPLETED in SUCCESS!\n" + getStatus(null, exec));
 		}

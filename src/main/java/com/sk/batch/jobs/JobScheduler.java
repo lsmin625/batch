@@ -3,13 +3,11 @@ package com.sk.batch.jobs;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
@@ -23,15 +21,20 @@ import com.sk.batch.admin.TriggerJobInfo;
 @Service
 public class JobScheduler implements JobCaller, SchedulingConfigurer {
 	private Logger logger = LoggerFactory.getLogger(JobScheduler.class);
+	public static String CRON_HEARTBEAT = "0 0 7 * * ?";
 
 	@Autowired
 	private JobExecutor jobExecutor;
 
 	@Autowired
 	private Executor taskExecutor;
-	
+
+	@Autowired
+	private TriggerJobInfo triggerJobInfo;
+
 	private static Hashtable<TriggerJobInfo, ScheduledTask> cronTable = new Hashtable<TriggerJobInfo, ScheduledTask>();
     private ScheduledTaskRegistrar taskRegistrar;
+    private boolean justStarted = true;
 
 
     @Override
@@ -41,7 +44,6 @@ public class JobScheduler implements JobCaller, SchedulingConfigurer {
     }
 
 	public void setCron(TriggerJobInfo jobInfo, String cron) {
-        logger.info("#### SET CRON JOB=" + jobInfo.getName() + ", CRON=" + cron);
         if(cronTable.containsKey(jobInfo)) {
 			ScheduledTask schedule = cronTable.get(jobInfo);
 			CronTask task = (CronTask) schedule.getTask();
@@ -51,7 +53,7 @@ public class JobScheduler implements JobCaller, SchedulingConfigurer {
         jobInfo.setCron(cron);
         ScheduledTask schedule = taskRegistrar.scheduleCronTask(new CronTask(new Runnable() {
 		    public void run() {
-	    		doJob(jobInfo.getJob());
+	    		doJob(jobInfo);
 		    	}
 			}, cron));
 //		taskRegistrar.afterPropertiesSet(); //necessary when use "taskRegistrar.addCronTask()"
@@ -60,9 +62,9 @@ public class JobScheduler implements JobCaller, SchedulingConfigurer {
 		cronTable.put(jobInfo, schedule);
  	}
 
-	public void doJob(Job job) {
-    	logger.info("#### DO SCHEDULE JOB=" + job.getName());
-    	jobExecutor.execute(job, this);
+	public void doJob(TriggerJobInfo jobInfo) {
+    	logger.info("#### DO SCHEDULE JOB=" + jobInfo.toString());
+    	jobExecutor.execute(jobInfo, this);
     }
 
     private Map<String, Object> getStatus(JobExecution exec) {
@@ -89,17 +91,22 @@ public class JobScheduler implements JobCaller, SchedulingConfigurer {
     }
 
 	@Override
-	public void jobStarted(JobExecution exec) {
+	public void jobStarted(TriggerJobInfo jobInfo, JobExecution exec) {
 		logger.info("#### SCHEDULER JOB STARTED\n" + getStatus(exec));
 	}
 
 	@Override
-	public void jobFinished(JobExecution exec) {
+	public void jobFinished(TriggerJobInfo jobInfo, JobExecution exec) {
+		if(justStarted && jobInfo.isRegistered()) {
+			setCron(triggerJobInfo, CRON_HEARTBEAT);
+			logger.info("#### SET HEARTBEAT JOB=" + getStatus(exec));
+			justStarted = false;
+		}
 		if(exec.getStatus() == BatchStatus.COMPLETED) {
-			logger.info("#### SCHEDULER JOB COMPLETED in SUCCESS!\n" + getStatus(exec));
+			logger.info("#### SCHEDULER JOB COMPLETED in SUCCESS!" + getStatus(exec));
 		}
 		else {
-			logger.info("#### SCHEDULER JOB COMPLETED in FAIL!!!!\n" + getStatus(exec));
+			logger.info("#### SCHEDULER JOB COMPLETED in FAIL!!!!" + getStatus(exec));
 		}
 	}
 

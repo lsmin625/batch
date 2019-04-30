@@ -8,19 +8,22 @@ import java.net.URL;
 import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.Enumeration;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.sk.batch.jobs.JobController;
 import com.sk.batch.jobs.JobScheduler;
 
-@Component
+//@Component
+@Service
 public class AdminRegister implements CommandLineRunner {
 	private Logger logger = LoggerFactory.getLogger(JobController.class);
 	
@@ -29,9 +32,29 @@ public class AdminRegister implements CommandLineRunner {
 
 	@Autowired
 	private TriggerJobList triggerJobList;
+
+	@Autowired
+	private TriggerJobInfo triggerJobInfo;
 	
-	private static Encoder Enc = Base64.getEncoder();
-	private boolean notRegistered = true;
+	@Override
+	public void run(String... args) throws Exception {
+		try {
+		    Thread.sleep(3000);
+			scheduler.setCron(triggerJobInfo, triggerJobInfo.getCron());
+			
+    		for(TriggerJobInfo jobInfo : triggerJobList) {
+				logger.info("#### JOB=" + jobInfo.toString());
+				if(jobInfo.getMode().equalsIgnoreCase("self")) {
+			    	scheduler.setCron(jobInfo, jobInfo.getCron());
+				}
+			}
+
+		} catch (Exception e) {
+			logger.error("#### BATCH ADMIN URL ERROR", e);;
+		}
+		return;
+	}
+/*	
 
 	@Override
 	public void run(String... args) throws Exception {
@@ -55,8 +78,7 @@ public class AdminRegister implements CommandLineRunner {
 			logger.error("#### BATCH ADMIN URL ERROR", e);;
 		}
 	}
-	
-	private boolean registToAdmin(TriggerJobInfo jobInfo) {
+private boolean registToAdmin(TriggerJobInfo jobInfo) {
 		try {
 			URL url = new URL(getParameter(jobInfo));
 			logger.info("#### BATCH ADMIN URL=" + url.toString());
@@ -118,4 +140,5 @@ public class AdminRegister implements CommandLineRunner {
 		}
      	return response.toString();
 	}
+*/
 }

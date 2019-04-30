@@ -1,28 +1,31 @@
 package com.sk.batch.jobs;
 
+import java.util.Hashtable;
+
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListenerSupport;
-import org.springframework.stereotype.Component;
+import com.sk.batch.admin.TriggerJobInfo;
 
-@Component
 public class JobFinishedListener extends JobExecutionListenerSupport {
-	private JobCaller caller = null;
+	private static Hashtable<JobExecution, TriggerJobInfo> jobTable = new Hashtable<JobExecution, TriggerJobInfo>();
 
-	public synchronized void setCaller(JobCaller caller) {
-		this.caller = caller;
+	public synchronized void setJobExecution(JobExecution exec, TriggerJobInfo jobInfo) {
+		jobTable.put(exec, jobInfo);
 	}
 	
 	@Override
 	public void beforeJob(JobExecution jobExecution) {
-		if(caller != null) {
-			caller.jobStarted(jobExecution);
+		TriggerJobInfo jobInfo = jobTable.get(jobExecution);
+		if(jobInfo != null) {
+			jobInfo.getCaller().jobStarted(jobInfo, jobExecution);
 		}
 	}
 
 	@Override
 	public void afterJob(JobExecution jobExecution) {
-		if(caller != null) {
-			caller.jobFinished(jobExecution);
+		TriggerJobInfo jobInfo = jobTable.get(jobExecution);
+		if(jobInfo != null) {
+			jobInfo.getCaller().jobFinished(jobInfo, jobExecution);
 		}
 	}
 

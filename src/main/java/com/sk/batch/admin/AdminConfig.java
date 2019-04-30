@@ -30,6 +30,8 @@ import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import com.sk.batch.jobs.JobFinishedListener;
+
 @Configuration
 public class AdminConfig implements EnvironmentAware {
 
@@ -50,6 +52,11 @@ public class AdminConfig implements EnvironmentAware {
     public TriggerJobList triggerJobList() {
     	TriggerJobList triggerJobList = new TriggerJobList();
         return triggerJobList;
+    }
+
+    @Bean
+    public JobFinishedListener jobFinishedListener() {
+        return new JobFinishedListener();
     }
 
     @Bean

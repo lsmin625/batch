@@ -53,8 +53,6 @@ import com.sk.batch.jobs.job01.step3.UserRowMapper;
 @Configuration 
 @Import(AdminConfig.class)
 public class JobConfig {
-//	public static final String SCHEDULE = "0 0/10 * * * ?";
-//	public static final String DATEFORMAT = "yyyy-MM-dd HH:mm:00";
 	
 	@Autowired
 	private Environment env;
@@ -76,10 +74,10 @@ public class JobConfig {
     private JobBuilderFactory jobBuilderFactory;
 
 	@Autowired
-	private JobFinishedListener jobListener;
+	private JobFinishedListener jobFinishedListener;
 
 	@Autowired
-	private TriggerJobList jobList;
+	private TriggerJobList triggerJobList;
 
     @Bean @Qualifier("jobDataSource")
     public DataSource jobDataSource() {
@@ -229,7 +227,7 @@ public class JobConfig {
  		JobBuilder jobBuilder = jobBuilderFactory.get("sampleBatchJob");
         jobBuilder.incrementer(new RunIdIncrementer());
         jobBuilder.preventRestart();
-        jobBuilder.listener(jobListener);
+        jobBuilder.listener(jobFinishedListener);
 
         JobFlowBuilder jobFlowBuilder = jobBuilder.flow(step1);
         jobFlowBuilder.next(step2);
@@ -247,7 +245,7 @@ public class JobConfig {
         jobInfo.setAdminUrl("http://127.0.0.1:9090/regist");
         jobInfo.setCallbackUrl("http://127.0.0.1:9091/");
         jobInfo.setJob(job);
-        jobList.put("sampleBatchJob", jobInfo);
+        triggerJobList.add(jobInfo);
         
         return job;
     }
