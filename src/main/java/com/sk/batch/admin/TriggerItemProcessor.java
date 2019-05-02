@@ -23,6 +23,12 @@ public class TriggerItemProcessor implements ItemProcessor<TriggerJobInfo, Trigg
     	jobInfo.setRegistered(false);
 
     	StringBuffer buff = new StringBuffer(jobInfo.getAdminUrl());
+    	if(triggerJobInfo.isRegistered()) {
+        	buff.append("/heartbeat");
+    	}
+    	else {
+        	buff.append("/regist");
+    	}
 		buff.append("?job=" + Enc.encodeToString(jobInfo.getName().getBytes()));
 		buff.append("&desc=" + Enc.encodeToString(jobInfo.getDesc().getBytes()));
 		buff.append("&mode=" + Enc.encodeToString(jobInfo.getMode().getBytes()));
@@ -39,12 +45,11 @@ public class TriggerItemProcessor implements ItemProcessor<TriggerJobInfo, Trigg
 		    conn.setReadTimeout(1000);
 		    if(conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
 		    	jobInfo.setRegistered(true);
-		    	triggerJobInfo.setRegistered(true);
 				logger.info("@@@@ REGIST SUCCESS JOB=" + jobInfo.toString());
 		    }
 		}
 		catch(Exception e) {
-			logger.info("@@@@ REGIST TIMEOUT TO ADMIN");
+			logger.info("@@@@ REGIST TO ADMIN TIMEOUT");
 		}
 		finally {
 			if(conn != null) {

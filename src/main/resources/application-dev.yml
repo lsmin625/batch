@@ -1,0 +1,34 @@
+meta:
+  admin-url: http://127.0.0.1:9090/
+  callback-url: http://127.0.0.1:9091/
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://127.0.0.1:3306/jside
+    username: ENC(yxN/mqqITFXs1Hk8nf1a8g==)
+    password: ENC(aDlF1/UeXM7pdKxjER25pczJ0Qd2Dywy)
+
+job:
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    url: jdbc:sqlite:D:/data/batch-jobs.db
+    username: ENC(HN3Y5j1JRF4y3DRXoPIJrA==)
+    password: ENC(ajOdzzD7FDVoZ6SZegisXw==)
+
+job01:
+  name: firstJob
+  desc: "Sample Job with 2 steps"
+  mode: self
+  cron: "0 0/5 * * * ?"
+  file:
+    step1-input: "D:/data/step1-input.csv"
+    step1-output: "D:/data/step1-output.xml"
+    step2-schema: "D:/data/step2-schema.sql"
+
+job02:
+  name: secondJob
+  desc: "Other job with just one step"
+  mode: self
+  cron: "0 0/10 * * * ?"
+  file:
+    step1-output: "D:/data/job2-output.json"
+    

@@ -1,8 +1,6 @@
-package com.sk.batch.jobs;
+package com.sk.batch.admin;
 
 import org.springframework.batch.core.JobExecution;
-
-import com.sk.batch.admin.TriggerJobInfo;
 
 public interface JobCaller {
 	String getCallerName();

@@ -1,4 +1,4 @@
-package com.sk.batch.jobs.job01.step3;
+package com.sk.batch.jobs.job02.step1;
 
 import org.springframework.batch.item.ItemProcessor;
 

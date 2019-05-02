@@ -1,4 +1,4 @@
-package com.sk.batch.jobs.job01.step3;
+package com.sk.batch.jobs.job02.step1;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,5 +19,4 @@ public class UserRowMapper implements RowMapper<UserXml> {
 		userXml.setUpdatedDate(rs.getDate("updated_date"));
 		return userXml;
 	}
-
 }

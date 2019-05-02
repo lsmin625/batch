@@ -19,30 +19,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import com.sk.batch.jobs.JobFinishedListener;
 
 @Configuration 
 @Import(AdminConfig.class)
 public class TriggerJobConfig {
-	public static String CRON_REGIST = "0 0/1 * * * ?";
 
-	@Value("${meta.admin-url}")
-	private String adminUrl;
-	
-	@Value("${meta.callback-url}")
-	private String callbackUrl;
+	@Autowired private StepBuilderFactory stepBuilderFactory;
+	@Autowired private JobBuilderFactory jobBuilderFactory;
+	@Autowired private TriggerJobList triggerJobList;
 
-	@Autowired
-	StepBuilderFactory stepBuilderFactory;
+	@Value("${meta.admin-url}") private String adminUrl;
+	@Value("${meta.callback-url}") private String callbackUrl;
 
-	@Autowired
-    private JobBuilderFactory jobBuilderFactory;
-
-	@Autowired
-	private JobFinishedListener jobFinishedListener;
-
-	@Autowired
-	private TriggerJobList triggerJobList;
 	
  	@Bean @Qualifier("triggerJobInfo")
     public TriggerJobInfo triggerJobInfo() {
@@ -50,12 +38,17 @@ public class TriggerJobConfig {
         jobInfo.setName("triggerRegistJob");
         jobInfo.setDesc("Registration and Hearbeat");
         jobInfo.setMode("self");
-        jobInfo.setCron(CRON_REGIST);
         jobInfo.setAdminUrl(adminUrl);
         jobInfo.setCallbackUrl(callbackUrl);
         return jobInfo;
 	}
- 	
+
+    @Bean @Qualifier("triggerFinishedListener")
+    public TriggerFinishedListener triggerFinishedListener() {
+    	TriggerFinishedListener listener = new TriggerFinishedListener(triggerJobList);
+        return listener;
+    }
+
     @Bean @Qualifier("triggerReader")
     public ItemReader<TriggerJobInfo> triggerReader() {
     	TriggerItemReader reader = new TriggerItemReader(triggerJobList);
@@ -86,13 +79,15 @@ public class TriggerJobConfig {
         return simpleStepBuilder.build();
 	}
 	
+  	@Bean @Qualifier("triggerRegistJob")
+    public Job triggerRegistJob(@Qualifier("triggerStep") Step step, 
+    		@Qualifier("triggerJobInfo") TriggerJobInfo triggerJobInfo, 
+    		@Qualifier("triggerFinishedListener") TriggerFinishedListener listener) {
 
- 	@Bean @Qualifier("triggerRegistJob")
-    public Job triggerRegistJob(@Qualifier("triggerStep") Step step, @Qualifier("triggerJobInfo") TriggerJobInfo triggerJobInfo) {
-		JobBuilder jobBuilder = jobBuilderFactory.get("triggerRegistJob");
+  		JobBuilder jobBuilder = jobBuilderFactory.get("triggerRegistJob");
 		jobBuilder.incrementer(new RunIdIncrementer());
 		jobBuilder.preventRestart();
-		jobBuilder.listener(jobFinishedListener);
+		jobBuilder.listener(listener);
 		
 		JobFlowBuilder jobFlowBuilder = jobBuilder.flow(step);
 		jobFlowBuilder.end();

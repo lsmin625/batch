@@ -1,59 +1,43 @@
 package com.sk.batch.admin;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Base64;
-import java.util.Base64.Encoder;
-import java.util.Enumeration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.sk.batch.jobs.JobController;
-import com.sk.batch.jobs.JobScheduler;
-
-//@Component
 @Service
 public class AdminRegister implements CommandLineRunner {
-	private Logger logger = LoggerFactory.getLogger(JobController.class);
+	private Logger logger = LoggerFactory.getLogger(AdminRegister.class);
+	public static String CRON_REGIST = "0 0/1 * * * ?";
+	public static String CRON_HEARTBEAT = "0 0 7 * * ?";
 	
-	@Autowired
-	private JobScheduler scheduler;
-
-	@Autowired
-	private TriggerJobList triggerJobList;
-
-	@Autowired
-	private TriggerJobInfo triggerJobInfo;
+	@Autowired private JobScheduler scheduler;
+	@Autowired private TriggerJobList triggerJobList;
+	@Autowired private TriggerJobInfo triggerJobInfo;
+	@Autowired private TriggerFinishedListener triggerFinishedListener;
 	
 	@Override
 	public void run(String... args) throws Exception {
 		try {
 		    Thread.sleep(3000);
-			scheduler.setCron(triggerJobInfo, triggerJobInfo.getCron());
+		    triggerJobInfo.setCron(CRON_REGIST);
+			scheduler.setCron(triggerJobInfo, CRON_REGIST);
+			triggerFinishedListener.setProperties(scheduler, triggerJobInfo, CRON_HEARTBEAT);
 			
     		for(TriggerJobInfo jobInfo : triggerJobList) {
-				logger.info("#### JOB=" + jobInfo.toString());
+				logger.info("#### LIST-JOB " + jobInfo.toString());
 				if(jobInfo.getMode().equalsIgnoreCase("self")) {
 			    	scheduler.setCron(jobInfo, jobInfo.getCron());
 				}
 			}
 
 		} catch (Exception e) {
-			logger.error("#### BATCH ADMIN URL ERROR", e);;
+			logger.error("#### THREAD.sleep ERROR", e);;
 		}
 		return;
 	}
+
 /*	
 
 	@Override

@@ -1,0 +1,6 @@
+[
+ {"userName":"andrew","userId":1234,"transactionDate":1446217200000,"transactionAmount":10000.0,"updatedDate":1556774280098,"userGroup":"Guest"},
+ {"userName":"john","userId":2134,"transactionDate":1449068400000,"transactionAmount":12321.0,"updatedDate":1556774280098,"userGroup":"Guest"},
+ {"userName":"robin","userId":3354,"transactionDate":1422802800000,"transactionAmount":23411.0,"updatedDate":1556774280098,"userGroup":"Guest"},
+ {"userName":"peter","userId":4354,"transactionDate":1577890800000,"transactionAmount":33091.0,"updatedDate":1556774280098,"userGroup":"Guest"}
+]

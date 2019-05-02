@@ -2,8 +2,6 @@ package com.sk.batch.admin;
 
 import org.springframework.batch.core.Job;
 
-import com.sk.batch.jobs.JobCaller;
-
 import lombok.Data;
 
 @Data
