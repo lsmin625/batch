@@ -27,7 +27,7 @@ job01:
 job02:
   name: secondJob
   desc: "Other job with just one step"
-  mode: self
+  mode: trigger
   cron: "0 0/3 * * * ?"
   file:
     step1-output: "D:/data/job2-output.json"

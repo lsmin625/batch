@@ -12,16 +12,14 @@ public class TriggerFinishedListener implements JobExecutionListener {
 	private TriggerJobList triggerJobList;
 	private JobScheduler jobScheduler;
 	private TriggerJobInfo triggerJobInfo;
-	private String heatbeat;
 	
 	public TriggerFinishedListener(TriggerJobList list) {
 		this.triggerJobList = list;
 	}
 	
-	public void setProperties(JobScheduler scheduler, TriggerJobInfo jobInfo, String cron) {
+	public void setProperties(JobScheduler scheduler, TriggerJobInfo jobInfo) {
 		this.jobScheduler = scheduler;
 		this.triggerJobInfo = jobInfo;
-		this.heatbeat = cron;
 	}
 
 	@Override
@@ -35,15 +33,14 @@ public class TriggerFinishedListener implements JobExecutionListener {
 			for(TriggerJobInfo jobInfo : triggerJobList) {
 				if(jobInfo.isRegistered()) {
 					triggerJobInfo.setRegistered(true);
-				    triggerJobInfo.setCron(heatbeat);
-					jobScheduler.setCron(triggerJobInfo, heatbeat);
-					logger.info("@@@ REGIST TO HEARTBEAT JOB=" + triggerJobInfo.toString());
+					jobScheduler.removeCron(triggerJobInfo);
+					logger.info("@@@ REGISTRATION FINISHED JOB=" + triggerJobInfo.toString());
 					return;
 				}
 			}
 		}
 		else {
-			logger.info("@@@ REGIST NEEDS MORE TRIES JOB=" + triggerJobInfo.toString());
+			logger.info("@@@ NEEDS MORE REGISTRATION TRIES JOB=" + triggerJobInfo.toString());
 		}
 	}
 }

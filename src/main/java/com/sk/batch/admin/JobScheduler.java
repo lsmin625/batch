@@ -32,6 +32,18 @@ public class JobScheduler implements JobCaller, SchedulingConfigurer {
     	taskRegistrar.setScheduler(taskExecutor);
     }
 
+	public void removeCron(TriggerJobInfo jobInfo) {
+        if(cronTable.containsKey(jobInfo.getName())) {
+			ScheduledTask schedule = cronTable.get(jobInfo.getName());
+            logger.info("#### REMOVE EXISTING JOB=" + jobInfo.getName());
+			schedule.cancel();
+			cronTable.remove(jobInfo.getName());
+        }
+        else {
+            logger.info("#### REMOVE FAILED UNKNOWN JOB=" + jobInfo.getName());
+        }
+ 	}
+
 	public void setCron(TriggerJobInfo jobInfo, String cron) {
         if(cronTable.containsKey(jobInfo.getName())) {
 			ScheduledTask schedule = cronTable.get(jobInfo.getName());

@@ -9,8 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class AdminRegister implements CommandLineRunner {
 	private Logger logger = LoggerFactory.getLogger(AdminRegister.class);
-	public static String CRON_REGIST = "0 0/1 * * * ?";
-	public static String CRON_HEARTBEAT = "0 0 7 * * ?";
+	public static String CRON_REGIST = "30 * * * * ?";
 	
 	@Autowired private JobScheduler scheduler;
 	@Autowired private TriggerJobList triggerJobList;
@@ -20,14 +19,14 @@ public class AdminRegister implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		try {
-		    Thread.sleep(3000);
+		    Thread.sleep(2000);
 		    triggerJobInfo.setCron(CRON_REGIST);
 			scheduler.setCron(triggerJobInfo, CRON_REGIST);
-			triggerFinishedListener.setProperties(scheduler, triggerJobInfo, CRON_HEARTBEAT);
+			triggerFinishedListener.setProperties(scheduler, triggerJobInfo);
 			
     		for(TriggerJobInfo jobInfo : triggerJobList) {
 				logger.info("#### LIST-JOB " + jobInfo.toString());
-				if(jobInfo.getMode().equalsIgnoreCase("self")) {
+				if(TriggerJobInfo.MODE_SELF.equalsIgnoreCase(jobInfo.getMode())) {
 			    	scheduler.setCron(jobInfo, jobInfo.getCron());
 				}
 			}

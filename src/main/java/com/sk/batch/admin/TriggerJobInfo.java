@@ -6,6 +6,9 @@ import lombok.Data;
 
 @Data
 public class TriggerJobInfo {
+	public static final String MODE_SELF = "SELF";
+	public static final String MODE_TRIGGER = "TRIGGER";
+
 	String name;
 	String desc;
 	String mode;
