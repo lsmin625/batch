@@ -39,10 +39,10 @@ import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 
-import com.sk.batch.admin.AdminConfig;
-import com.sk.batch.admin.JobFinishedListener;
-import com.sk.batch.admin.TriggerJobInfo;
-import com.sk.batch.admin.TriggerJobList;
+import com.sk.batch.lib.AdminConfig;
+import com.sk.batch.lib.JobFinishedListener;
+import com.sk.batch.lib.TriggerJobInfo;
+import com.sk.batch.lib.TriggerJobList;
 import com.sk.batch.jobs.job01.data.User;
 import com.sk.batch.jobs.job01.data.UserXml;
 import com.sk.batch.jobs.job01.step1.CsvToXmlProcessor;
