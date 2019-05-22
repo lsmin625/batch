@@ -1,6 +1,9 @@
+server:
+  port: 9081
+  
 meta:
   admin-url: http://127.0.0.1:9090/
-  callback-url: http://127.0.0.1:9091/
+  callback-url: http://127.0.0.1:9081/
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mariadb://127.0.0.1:3306/jside
@@ -15,8 +18,8 @@ job:
     password: ENC(ajOdzzD7FDVoZ6SZegisXw==)
 
 job01:
-  name: firstJob
-  desc: "Sample Job with 2 steps"
+  name: SAMPLE-JOB-DEV-01
+  desc: "Sample Job@DEV with 2 steps"
   mode: self
   cron: "0 0/5 * * * ?"
   file:
@@ -25,8 +28,8 @@ job01:
     step2-schema: "D:/data/step2-schema.sql"
 
 job02:
-  name: secondJob
-  desc: "Other job with just one step"
+  name: SAMPLE-JOB-DEV-02
+  desc: "Other job@DEV with just one step"
   mode: self
   cron: "0 0/10 * * * ?"
   file:

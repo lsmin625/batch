@@ -22,7 +22,8 @@
 	  <repository>
 	    <id>local-repo</id>
 	    <name>Local Repository</name>
-	    <url>file://${project.basedir}/lib</url>
+<!-- 	<url>file://${project.basedir}/lib</url> -->
+	    <url>file://D:\src\batch-shell\lib</url>
 	  </repository>
 	</repositories>
  
@@ -78,7 +79,7 @@
 		<dependency>
 			<groupId>com.sk.batch</groupId>
 			<artifactId>batch-lib</artifactId>
-			<version>1.0.5</version>
+			<version>1.0.6</version>
 		</dependency>
 
 	</dependencies>

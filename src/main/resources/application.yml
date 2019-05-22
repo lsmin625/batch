@@ -4,9 +4,6 @@ spring:
       enabled: false
   profiles:    active: dev
 
-server:
-  port: 9091
-  
 jasypt:
   encryptor:
     bean: jasyptEncryptor
